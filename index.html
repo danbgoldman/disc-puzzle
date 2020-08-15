@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- adapted from url=https://javascript.info/mouse-drag-and-drop -->
+<!-- saved from url=(0051)https://en.js.cx/article/mouse-drag-and-drop/ball3/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+</head>
+
+<body style="height: 200px">
+
+  <p>Drag the ball with the mouse. Press shift key to rotate the ball instead.</p>
+
+  <img src="ball.svg" style="cursor: pointer; position: absolute; z-index: 1000; left: 250px; top: 250px;" width="100" height="100" id="ball">
+
+
+  <script>
+	"use strict";
+	let ball = document.getElementById("ball"); // get the ball image element
+
+	// Override the default drag and drop behavior of the browser.
+	ball.ondragstart = function() {	return false; };
+
+	/* it's very inconvenient to find out how much an element has already been rotated, so
+	   we're going to store it in the object to make things simpler. Default rotation is zero. */
+	ball.rotation = 0;
+
+	ball.onmousedown = function(event) {
+		// When we click the mouse on the ball, we need to store some things.
+
+		// This object has the pixel positions of each edge of the ball element.
+		let rect = ball.getBoundingClientRect();
+
+		// This object stores how we handle mouse move events. It starts empty.
+		var moveHandler;
+
+		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
+		   to switch to rotation mode for now, but it could be done using a tool mode or some
+		   other way. */
+
+		if (!event.shiftKey) {
+			/* To handle dragging mode, we just keep track of where we started, relative to the
+			   top left of the element. */
+			let offsetX = event.pageX - rect.left;
+			let offsetY = event.pageY - rect.top;
+
+			function moveAt(event) {
+				/* As we move the mouse, keep that offset constant with the current position. */
+				ball.style.left = event.pageX - offsetX + 'px';
+				ball.style.top = event.pageY - offsetY + 'px';
+			}
+
+			moveHandler = moveAt;
+		} else {
+			/* Now we have to handle rotation mode. In this mode we care about an
+			   imaginary vector from the center of the object to the mouse position.
+			   As we move the mouse around, the angle between the original vector and
+			   the current vector is how much we need to rotate. So we will need to keep
+			   track of the center. */
+
+			let centerX = (rect.left + rect.right) / 2;
+			let centerY = (rect.top + rect.bottom) / 2;
+
+			/* And the other point on the line is the mouse. By subtracting the center,
+			   we can find the angle of the line. */
+
+			let startVecX = event.pageX - centerX;
+			let startVecY = event.pageY - centerY;
+
+			/* CSS uses degrees, so we'll convert to those units */
+			let radiansToDegrees = 180 / Math.PI;
+
+			/* We can get the starting angle using the arctangent: */
+			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
+
+			/* One final complication: Sometimes the object already has some rotation! In that
+			   case we would compute the final rotation as
+			
+			   finalRotation = startRotation + (endAngle - startAngle)
+			
+			   But only the endAngle is actually changing, so we can rewrite this as:
+			
+			   angleOffset = startRotation - startAngle;
+			   finalRotation = angleOffset + endAngle;
+			
+			   angleOffset only needs to be computed once: */
+
+			let angleOffset = ball.rotation - startAngle;
+
+			function rotateAt(event) {
+				/* Find the vector from center to current mouse position. */
+				let endVecX = event.pageX - centerX;
+				let endVecY = event.pageY - centerY;
+
+				/* Compute the angle of that vector in degrees: */
+				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
+
+				/* Using the formula above, update the ball rotation. */
+				ball.rotation = Math.round(endAngle + angleOffset);
+
+				/* Replace negative rotations with positive ones. */
+				if (ball.rotation < 0) ball.rotation += 360;
+
+				/* Assign the CSS transform attribute */
+				ball.style.transform = "rotate(" + ball.rotation + "deg)";
+			}
+
+			moveHandler = rotateAt;
+		}
+
+		/* Assign the appropriate handler. Note that an object covering the whole window
+		   - in this case the document itself - has to be the target, since we
+		   might move the pointer off the object. */
+		document.addEventListener('mousemove', moveHandler);
+
+		// When the move is over, remove the event listeners.
+		document.onmouseup = function() {
+			document.removeEventListener('mousemove', moveHandler);
+			document.onmouseup = null;
+		};
+
+	};
+
+  </script>
+
+
+
+
+</body></html>
