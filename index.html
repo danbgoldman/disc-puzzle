@@ -7,9 +7,8 @@
 
 <body style="height: 200px">
 
-  <p>Drag the ball with the mouse. Press shift key to rotate the ball instead.</p>
-
-  <img src="assets/ball.svg" style="cursor: pointer; position: absolute; z-index: 1000; left: 250px; top: 250px;" width="100" height="100" id="ball">
+  <p>Drag the Disks to the pegs. Press Shift to rotate the disks.</p>
+  
   <img src="assets/Peg1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
   <img src="assets/Peg2.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 779px; top: 196px;" width="20" height="20" id="Peg2">
   <img src="assets/Peg3.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 904px; top: 254px;" width="20" height="20" id="Peg3">
@@ -21,124 +20,72 @@
   <img src="assets/Peg9.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 553px; top: 522px;" width="20" height="20" id="Peg9">
   <img src="assets/Peg10.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 794px; top: 619px;" width="20" height="20" id="Peg10">
   <img src="assets/Peg11.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 554px;" width="20" height="20" id="Peg11">
-  <img src="assets/ball.svg" style="cursor: pointer; position: absolute; z-index: 1000; left: 250px; top: 250px;" width="100" height="100" id="ball">
   <img src="assets/Disc 1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 400px; top: 400px;" id="Disc1">
   
   <script>
 	"use strict";
-	let Disc1 = document.getElementById("Disc1");
+	let Disc1 = document.getElementById("Disc1"); // get the ball image element
+	
+	// Override the default drag and drop behavior of the browser.
 	Disc1.ondragstart = function() {	return false; };
+	
+	/* it's very inconvenient to find out how much an element has already been rotated, so
+	   we're going to store it in the object to make things simpler. Default rotation is zero. */
 	Disc1.rotation = 0;
 
 	Disc1.onmousedown = function(event) {
-	
-		let rect = Disc1.getBoundingClientRect();
-		
-		var moveHandler;
-		
-		if (!event.shiftKey) {
-		
-			let offsetX = event.pageX - rect.left;
-			let offsetY = event.pageY - rect.top;
-
-			function moveAt(event) {
-				Disc1.style.left = event.pageX - offsetX + 'px';
-				Disc1.style.top = event.pageY - offsetY + 'px';
-			}
-
-
-			moveHandler = moveAt;
-		} else {
-		
-			let centerX = (rect.left + rect.right) / 2;
-			let centerY = (rect.top + rect.bottom) / 2;
-
-			let startVecX = event.pageX - centerX;
-			let startVecY = event.pageY - centerY;
-
-			let radiansToDegrees = 180 / Math.PI;
-
-			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
-
-			let angleOffset = Disc1.rotation - startAngle;
-
-			function rotateAt(event) {
-
-				let endVecX = event.pageX - centerX;
-				let endVecY = event.pageY - centerY;
-
-				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
-
-				Disc1.rotation = Math.round(endAngle + angleOffset);
-
-				if (Disc1.rotation < 0) Disc1.rotation += 360;
-
-				Disc1.style.transform = "rotate(" + Disc1.rotation + "deg)";
-			}
-
-			moveHandler = rotateAt;
-		}
-		
-		document.addEventListener('mousemove', moveHandler);
-		
-		document.onmouseup = function() {
-			document.removeEventListener('mousemove', moveHandler);
-			document.onmouseup = null;
-			
-			var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 115];
-			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 522, 619, 554];
-			
-			for (var i = -1; i < 10; i++) {
-				let pegX = pegx[i];
-				let pegY = pegy[i];
-				if (Math.abs(((rect.left + rect.right) / 2) - pegX) < 50 && Math.abs(((rect.top + rect.bottom) / 2) - pegY < 50)) {
-					Disc1.style.left =  pegX - 174 + "px";
-					Disc1.style.top = pegY - 174 + "px";
-				} 
-			}
-			
-		};
-
-	};
-	
-  </script>
-
-
-  <script>
-	"use strict";
-	let ball = document.getElementById("ball"); // get the ball image element
-
-	// Override the default drag and drop behavior of the browser.
-	ball.ondragstart = function() {	return false; };
-
-	/* it's very inconvenient to find out how much an element has already been rotated, so
-	   we're going to store it in the object to make things simpler. Default rotation is zero. */
-	ball.rotation = 0;
-
-	ball.onmousedown = function(event) {
 		// When we click the mouse on the ball, we need to store some things.
 
 		// This object has the pixel positions of each edge of the ball element.
-		let rect = ball.getBoundingClientRect();
-
+		let rect = Disc1.getBoundingClientRect();
+		
 		// This object stores how we handle mouse move events. It starts empty.
 		var moveHandler;
-
+		
 		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
 		   to switch to rotation mode for now, but it could be done using a tool mode or some
 		   other way. */
-
+		
 		if (!event.shiftKey) {
+			/*The Disc may already have some rotation to it. If that is so
+			the "top left corner" isn't necissarily the top left corner due
+			to the rotation. To offset this simply find the center of the Disc
+			and subtract half of the height and width of the Disc. This sets
+			the true top left of the Disc*/
+			let DiscX = ((rect.left + rect.right) / 2) - 174;
+			let DiscY = ((rect.top + rect.bottom) / 2) - 174;
+			
 			/* To handle dragging mode, we just keep track of where we started, relative to the
 			   top left of the element. */
-			let offsetX = event.pageX - rect.left;
-			let offsetY = event.pageY - rect.top;
+			let offsetX = event.pageX - DiscX;
+			let offsetY = event.pageY - DiscY;
 
 			function moveAt(event) {
 				/* As we move the mouse, keep that offset constant with the current position. */
-				ball.style.left = event.pageX - offsetX + 'px';
-				ball.style.top = event.pageY - offsetY + 'px';
+				Disc1.style.left = event.pageX - offsetX + 'px';
+				Disc1.style.top = event.pageY - offsetY + 'px';
+				
+				/*getting the constant postition of where the disc is*/
+				let rect = Disc1.getBoundingClientRect();
+			
+				//Array is set up for each peg postition in the X and Y cordinates.
+				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1115];
+				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 522, 619, 554];
+			
+				/* loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
+				var a = -1;
+				for (var i = 0; i < 11; i++) {
+					a = a + 1;
+					let pegX = pegx[a];
+					let pegY = pegy[a];
+					if (Math.abs(((rect.left + rect.right) / 2) - pegX) < 50 && Math.abs(((rect.top + rect.bottom) / 2) - pegY) < 50) {
+						/*150 is derived from half the length and width of the disc png(174) subtracted from half the length and width of the peg png(24).*/
+						Disc1.style.left =  pegX - 150 + "px";
+						Disc1.style.top = pegY - 150 + "px";
+					} 
+				}
 			}
+
 
 			moveHandler = moveAt;
 		} else {
@@ -147,22 +94,22 @@
 			   As we move the mouse around, the angle between the original vector and
 			   the current vector is how much we need to rotate. So we will need to keep
 			   track of the center. */
-
+		
 			let centerX = (rect.left + rect.right) / 2;
 			let centerY = (rect.top + rect.bottom) / 2;
-
+			
 			/* And the other point on the line is the mouse. By subtracting the center,
 			   we can find the angle of the line. */
 
 			let startVecX = event.pageX - centerX;
 			let startVecY = event.pageY - centerY;
-
+			
 			/* CSS uses degrees, so we'll convert to those units */
 			let radiansToDegrees = 180 / Math.PI;
-
+			
 			/* We can get the starting angle using the arctangent: */
 			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
-
+			
 			/* One final complication: Sometimes the object already has some rotation! In that
 			   case we would compute the final rotation as
 			
@@ -175,9 +122,10 @@
 			
 			   angleOffset only needs to be computed once: */
 
-			let angleOffset = ball.rotation - startAngle;
+			let angleOffset = Disc1.rotation - startAngle;
 
 			function rotateAt(event) {
+				
 				/* Find the vector from center to current mouse position. */
 				let endVecX = event.pageX - centerX;
 				let endVecY = event.pageY - centerY;
@@ -186,23 +134,23 @@
 				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
 
 				/* Using the formula above, update the ball rotation. */
-				ball.rotation = Math.round(endAngle + angleOffset);
+				Disc1.rotation = Math.round(endAngle + angleOffset);
 
 				/* Replace negative rotations with positive ones. */
-				if (ball.rotation < 0) ball.rotation += 360;
+				if (Disc1.rotation < 0) Disc1.rotation += 360;
 
 				/* Assign the CSS transform attribute */
-				ball.style.transform = "rotate(" + ball.rotation + "deg)";
+				Disc1.style.transform = "rotate(" + Disc1.rotation + "deg)";
 			}
 
 			moveHandler = rotateAt;
 		}
-
+		
 		/* Assign the appropriate handler. Note that an object covering the whole window
 		   - in this case the document itself - has to be the target, since we
 		   might move the pointer off the object. */
 		document.addEventListener('mousemove', moveHandler);
-
+		
 		// When the move is over, remove the event listeners.
 		document.onmouseup = function() {
 			document.removeEventListener('mousemove', moveHandler);
@@ -210,10 +158,7 @@
 		};
 
 	};
-
+	
   </script>
-
-
-
 
 </body></html>
