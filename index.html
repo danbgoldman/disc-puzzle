@@ -10,17 +10,17 @@
   <p>Drag the Disks to the pegs. Press Shift to rotate the disks. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
   
   
-  <img src="assets/Peg1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
-  <img src="assets/Peg2.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 779px; top: 196px;" width="20" height="20" id="Peg2">
-  <img src="assets/Peg3.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 904px; top: 254px;" width="20" height="20" id="Peg3">
-  <img src="assets/Peg4.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 212px;" width="20" height="20" id="Peg4">
-  <img src="assets/Peg5.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 768px; top: 320px;" width="20" height="20" id="Peg5">
-  <img src="assets/Peg6.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 990px; top: 341px;" width="20" height="20" id="Peg6">
-  <img src="assets/Peg7.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 696px; top: 400px;" width="20" height="20" id="Peg7">
-  <img src="assets/Peg8.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 889px; top: 453px;" width="20" height="20" id="Peg8">
-  <img src="assets/Peg9.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 553px; top: 555px;" width="20" height="20" id="Peg9">
-  <img src="assets/Peg10.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 794px; top: 619px;" width="20" height="20" id="Peg10">
-  <img src="assets/Peg11.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 554px;" width="20" height="20" id="Peg11">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 779px; top: 196px;" width="20" height="20" id="Peg2">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 904px; top: 254px;" width="20" height="20" id="Peg3">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 212px;" width="20" height="20" id="Peg4">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 768px; top: 320px;" width="20" height="20" id="Peg5">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 990px; top: 341px;" width="20" height="20" id="Peg6">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 696px; top: 400px;" width="20" height="20" id="Peg7">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 889px; top: 453px;" width="20" height="20" id="Peg8">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 553px; top: 555px;" width="20" height="20" id="Peg9">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 794px; top: 619px;" width="20" height="20" id="Peg10">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 554px;" width="20" height="20" id="Peg11">
   <img src="assets/Disc 1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 45px;" id="Disc1">
   <img src="assets/Disc 4.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 85px;" id="Disc4">
   <img src="assets/Disc 9.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 125px;" id="Disc9">
@@ -37,80 +37,62 @@
   
   <script>
 	"use strict";
-	let Disc1 = document.getElementById("Disc1"); // get the disc image element
-	let Disc2 = document.getElementById("Disc2");
-	let Disc3 = document.getElementById("Disc3");
-	let Disc4 = document.getElementById("Disc4");
-	let Disc5 = document.getElementById("Disc5");
-	let Disc6 = document.getElementById("Disc6");
-	let Disc7 = document.getElementById("Disc7");
-	let Disc8 = document.getElementById("Disc8");
-	let Disc9 = document.getElementById("Disc9");
-	let Disc10 = document.getElementById("Disc10");
-	let Disc11 = document.getElementById("Disc11");
+	// get the disc image element
+	// Override the default drag and drop behavior of the browser.
+	/* it's very inconvenient to find out how much an element has already been rotated, so
+	   we're going to store it in the object to make things simpler. Default rotation is zero. */
+	let discElements = [];
+	let noDragFunc = function() { return false; };
+	for (i=0; i<11; i++) {
+		let disc = document.getElementById("Disc" + (i + 1));
+		disc.ondragstart = noDragFunc;
+		disc.rotation = 0;
+    }
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
 	
-	// Override the default drag and drop behavior of the browser.
-	Disc1.ondragstart = function() {	return false; };
-	Disc2.ondragstart = function() {	return false; };
-	Disc3.ondragstart = function() {	return false; };
-	Disc4.ondragstart = function() {	return false; };
-	Disc5.ondragstart = function() {	return false; };
-	Disc6.ondragstart = function() {	return false; };
-	Disc7.ondragstart = function() {	return false; };
-	Disc8.ondragstart = function() {	return false; };
-	Disc9.ondragstart = function() {	return false; };
-	Disc10.ondragstart = function() {	return false; };
-	Disc11.ondragstart = function() {	return false; };
+	/*Thr class Disc and varaible Disc are to assign the specific disc numbers to be used later on
+	in the code. name is for the string of the disc, size is for the radius of teh disc, defaultX is
+	for the default X position and same for defaultY except for the Y position.*/
 	
-	/* it's very inconvenient to find out how much an element has already been rotated, so
-	   we're going to store it in the object to make things simpler. Default rotation is zero. */
-	Disc1.rotation = 0;
-	Disc2.rotation = 0;
-	Disc3.rotation = 0;
-	Disc4.rotation = 0;
-	Disc5.rotation = 0;
-	Disc6.rotation = 0;
-	Disc7.rotation = 0;
-	Disc8.rotation = 0;
-	Disc9.rotation = 0;
-	Disc10.rotation = 0;
-	Disc11.rotation = 0;
+	class disc {
+		constructor(name, size, defaultX, defaultY) {
+			this.name = name;
+			this.size = size;
+			this.defaultX = defaultX; 
+			this.defaultY = defaultY;
+			this.rotation = 0; /* rotation is a prop of the "Disc" object, not the HTML element, so some other code would need to change. */
+
+			this.element = document.getElementById(name);
+			this.element.ondragstart = noDragFunc;
+		}
+	}
 	
-	/*These arrays store three things for each disc, DiscNumber stores the actual ID of the disc so that
-	it can easily be looped withing the funtction DiscMove. The second thing this stores is the center
-	of each disc, DiscSize. Since each of these elements are a perfect square there is no need to make
-	two seperate arrays for both the X and Y cordinates. The third is the storage device. This is used
-	to store where the player was if they decide to close thier browser and return where the left off.*/
-	var DiscNumber = [Disc1, Disc2, Disc3, Disc4, Disc5, Disc6, Disc7, Disc8, Disc9, Disc10, Disc11];
-	var DiscSize = [174, 57, 85, 174, 70, 41, 42, 115, 174, 80, 174];
-	var DiscStore = ['Disc1', "Disc2", "Disc3", "Disc4", "Disc5", "Disc6", "Disc7", "Disc8", "Disc9", "Disc10", "Disc11"];
-	var DiscDefaultX = [15, 132, 104, 15, 119, 148, 147, 74, 15, 109, 15];
-	var DiscDefaultY = [45, 428, 310, 85, 393, 478, 457, 252, 125, 353, 165];
+	var DiscClass = [new disc("Disc1", 174, 15, 45), 
+		new disc("Disc2", 57, 132, 428), 
+		new disc("Disc3", 85, 104, 310), 
+		new disc("Disc4", 174, 15, 85), 
+		new disc("Disc5", 70, 119, 393), 
+		new disc("Disc6", 41, 148, 478), 
+		new disc("Disc7", 42, 147, 457), 
+		new disc("Disc8", 115, 74, 252), 
+		new disc("Disc9", 174, 15, 125), 
+		new disc("Disc10", 80, 109, 353), 
+		new disc("Disc11", 174, 15, 165)
+	];
+
 	
-	/*The variable N is used to indicate the specific disc within the array DiscNumber above. The varaible
-	S is used to indicate the specific pixel size of the disc in the array DiscSize above. The variabel 
-	ResetCheck is used for stores and sees if the reset button was pressed*/
-	var N;
-	var S;
-	var ResetCheck;
-	
-	/*This is used to make sure none of the roatations are null, so that the roation number can be extracted*/
-	var a = -1;
+	/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted*/
 	for (var i = 0; i < 11; i++) {
-		a = a + 1;
-		let Disc = DiscNumber[a];
+		let Disc = DiscClass[i].element;
 		Disc.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
 	}
 	
 	/*This loop goes through all the previously stored positions of the discs and sets the discs to those
 	positions*/
-	var a = -1;
 	for (var i = 0; i < 11; i++) {
-		a = a + 1;
-		let DiscReceive = DiscStore[a];
-		let Disc = DiscNumber[a];
+		let DiscReceive = DiscClass[i].name;
+		let Disc = DiscClass[i].element;
 		var DiscLeft = parseFloat(localStorage.getItem(DiscReceive + 'Left'));
 		var DiscTop = parseFloat(localStorage.getItem(DiscReceive + 'Top'));
 		var DiscRotate = parseFloat(localStorage.getItem(DiscReceive + 'Rotation'));
@@ -120,27 +102,30 @@
 		Disc.style.transform = "rotate(" + DiscRotate + "deg)";
 		
 		/*These store the default position of the discs if the back button were to be pressed.*/
-		localStorage.setItem(DiscStore[a] + 'LeftPrevious', DiscDefaultX[a]);
-		localStorage.setItem(DiscStore[a] + 'TopPrevious', DiscDefaultY[a]);
-		localStorage.setItem(DiscStore[a] + 'RotationPrevious', '0');
+		localStorage.setItem(DiscReceive + 'LeftPrevious', DiscClass[i].defaultX);
+		localStorage.setItem(DiscReceive + 'TopPrevious', DiscClass[i].defaultY);
+		localStorage.setItem(DiscReceive + 'RotationPrevious', '0');
 		localStorage.setItem(DiscReceive + 'ResetPreviousLeft', Disc.style.left);
 		localStorage.setItem(DiscReceive + 'ResetPreviousTop', Disc.style.top);
 		localStorage.setItem(DiscReceive + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
 	}
+
+	function mouseDownHandler(event) {
+		event.target.DiscClass.move();
+	}	
 	
-	function DiscMove() {
+	DiscClass.move = function() {
 		//So that back button works correctly when moving an object after reseting
 		ResetCheck = 0;
 		
 		//These two specify which specific disk we're working with
-		let DSize = DiscSize[S];
-		let Disc = DiscNumber[N];
-		let DiscStorage = DiscStore[N];
+		let DSize = this.size;
+		let Disc = this.element;
 		
 		/*These store the initial point of where the disc is when first clicked.*/
-		localStorage.setItem(DiscStorage + 'LeftPrevious', Disc.style.left);
-		localStorage.setItem(DiscStorage + 'TopPrevious', Disc.style.top);
-		localStorage.setItem(DiscStorage + 'RotationPrevious', (Disc.style.transform.match(/\d+/)[0]));
+		localStorage.setItem(toString(Disc) + 'LeftPrevious', Disc.style.left);
+		localStorage.setItem(toString(Disc) + 'TopPrevious', Disc.style.top);
+		localStorage.setItem(toString(Disc) + 'RotationPrevious', (Disc.style.transform.match(/\d+/)[0]));
 		
 		
 		// When we click the mouse on the ball, we need to store some things.
@@ -183,11 +168,9 @@
 				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
 			
 				/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
-				var a = -1;
 				for (var i = 0; i < 11; i++) {
-					a = a + 1;
-					let pegX = pegx[a];
-					let pegY = pegy[a];
+					let pegX = pegx[i];
+					let pegY = pegy[i];
 					if (Math.abs(((rect.left + rect.right) / 2) - pegX) < 50 && Math.abs(((rect.top + rect.bottom) / 2) - pegY) < 50) {
 						/*150 is derived from half the length and width of the disc png subtracted from half the length and width of the peg png(24).*/
 						Disc.style.left =  pegX - (DSize - 24) + "px";
@@ -275,78 +258,25 @@
 			to close the window and come back later. Since locally storing requires 
 			a string instead of a variable or storage type, we can't use the "Disc" 
 			shortcut. So we must use another array to sort this one out.*/
-			localStorage.setItem(DiscStorage + 'Left', Disc.style.left);
-			localStorage.setItem(DiscStorage + 'Top', Disc.style.top);
-			localStorage.setItem(DiscStorage + 'Rotation', Disc.style.transform.match(/\d+/)[0]);
+			localStorage.setItem(toString(Disc) + 'Left', Disc.style.left);
+			localStorage.setItem(toString(Disc) + 'Top', Disc.style.top);
+			localStorage.setItem(toString(Disc) + 'Rotation', Disc.style.transform.match(/\d+/)[0]);
 			
 			/*These store the previous position of the disc if the reset button where to be pressed. 
 			This is meant for people who accidentally press the reset button and want to go back to 
 			what they had.*/
-			localStorage.setItem(DiscStorage + 'ResetPreviousLeft', Disc.style.left);
-			localStorage.setItem(DiscStorage + 'ResetPreviousTop', Disc.style.top);
-			localStorage.setItem(DiscStorage + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
+			localStorage.setItem(toString(Disc) + 'ResetPreviousLeft', Disc.style.left);
+			localStorage.setItem(toString(Disc) + 'ResetPreviousTop', Disc.style.top);
+			localStorage.setItem(toString(Disc) + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
 			
 		};
 		
 	}
-
+	
+	
 	/*These serious of functions are all called when a disc is clicked. When a disk is clicked
 	the variables N and S are there to determine which disc it is for the DiscMove function.*/
-	Disc1.onmousedown = function(event) {
-		N = 0;
-		S = 0;
-		DiscMove();
-	};
-	Disc2.onmousedown = function(event) {
-		N = 1;
-		S = 1;
-		DiscMove();
-	};
-	Disc3.onmousedown = function(event) {
-		N = 2;
-		S = 2;
-		DiscMove();
-	};
-	Disc4.onmousedown = function(event) {
-		N = 3;
-		S = 3;
-		DiscMove();
-	};
-	Disc5.onmousedown = function(event) {
-		N = 4;
-		S = 4;
-		DiscMove();
-	};
-	Disc6.onmousedown = function(event) {
-		N = 5;
-		S = 5;
-		DiscMove();
-	};
-	Disc7.onmousedown = function(event) {
-		N = 6;
-		S = 6;
-		DiscMove();
-	};
-	Disc8.onmousedown = function(event) {
-		N = 7;
-		S = 7;
-		DiscMove();
-	};
-	Disc9.onmousedown = function(event) {
-		N = 8;
-		S = 8;
-		DiscMove();
-	};
-	Disc10.onmousedown = function(event) {
-		N = 9;
-		S = 9;
-		DiscMove();
-	};
-	Disc11.onmousedown = function(event) {
-		N = 10;
-		S = 10;
-		DiscMove();
-	};
+	
 	
 	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. Aswell as the rotations.*/
 	ResetButton.onmousedown = function() {
@@ -354,29 +284,24 @@
 		ResetCheck = 1;
 		
 		//Sets all discs to their default positions
-		var a = -1;
 		for (var i = 0;i < 11; i++) {
-			a = a + 1;
-			let Disc = DiscNumber[a];
-			Disc.style.left = DiscDefaultX[a] + 'px';
-			Disc.style.top = DiscDefaultY[a] + 'px';
+			let Disc = DiscNumber[i];
+			Disc.style.left = DiscDefaultX[i] + 'px';
+			Disc.style.top = DiscDefaultY[i] + 'px';
 			
 		}
 		
 		//Resets all rotations and deletes the storage for the discs so that
 		//when the browser refreshes it doesn't go back to before it reset.
-		var a = -1;
 		for (var i = 0;i < 11; i++) {
-			a = a + 1;
-			let Disc = DiscNumber[a];
-			let DiscStorage = DiscStore[a];
+			let Disc = this.element;
 			//sets random disk rotation
 			Disc.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
 			
 			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
-			localStorage.removeItem(DiscStorage + 'Left');
-			localStorage.removeItem(DiscStorage + 'Top');
-			localStorage.removeItem(DiscStorage + 'Rotation');
+			localStorage.removeItem(toString(Disc) + 'Left');
+			localStorage.removeItem(toString(Disc) + 'Top');
+			localStorage.removeItem(toString(Disc) + 'Rotation');
 			
 		}
 		
@@ -390,36 +315,34 @@
 		
 			/*This loop runs through each position of each disc before the reset button was pressed.
 			It then sets those positions of teh discs to the ones before the reset button.*/
-			var a = -1;
 			for (var i = 0; i < 11; i++) {
-				a = a + 1;
-				let Disc = DiscNumber[a];
-				Disc.style.left = localStorage.getItem(DiscStore[a] + 'ResetPreviousLeft');
-				Disc.style.top = localStorage.getItem(DiscStore[a] + 'ResetPreviousTop');
-				Disc.style.transform = "rotate(" + localStorage.getItem(DiscStore[a] + 'ResetPreviousRotation') + "deg)";
+				let Disc = this.element[i];
+				Disc.style.left = localStorage.getItem(toString(Disc) + 'ResetPreviousLeft');
+				Disc.style.top = localStorage.getItem(toString(Disc) + 'ResetPreviousTop');
+				Disc.style.transform = "rotate(" + localStorage.getItem(toString(Disc) + 'ResetPreviousRotation') + "deg)";
 				
 				//This sets the "main" storage so that when the browser refreshes it doesn't go back to the "main" position
-				localStorage.setItem(DiscStore[a] + 'Left', localStorage.getItem(DiscStore[a] + 'ResetPreviousLeft'));
-				localStorage.setItem(DiscStore[a] + 'Top', localStorage.getItem(DiscStore[a] + 'ResetPreviousTop'));
-				localStorage.setItem(DiscStore[a] + 'Rotation', localStorage.getItem(DiscStore[a] + 'ResetPreviousRotation'));
+				localStorage.setItem(toString(Disc) + 'Left', localStorage.getItem(toString(Disc) + 'ResetPreviousLeft'));
+				localStorage.setItem(toString(Disc) + 'Top', localStorage.getItem(toString(Disc) + 'ResetPreviousTop'));
+				localStorage.setItem(toString(Disc) + 'Rotation', localStorage.getItem(toString(Disc) + 'ResetPreviousRotation'));
 			}
 			
 			ResetCheck = 0;
 			
 		} else {
 			//This function just returns the one disc the user touched to where it was before
-			let Disc = DiscNumber[N];
-			Disc.style.left = localStorage.getItem(DiscStore[N] + 'LeftPrevious');
-			Disc.style.top = localStorage.getItem(DiscStore[N] + 'TopPrevious');
-			Disc.style.transform = "rotate(" + localStorage.getItem(DiscStore[N] + 'RotationPrevious') + "deg)";
+			let Disc = this.element;
+			Disc.style.left = localStorage.getItem(toString(Disc) + 'LeftPrevious');
+			Disc.style.top = localStorage.getItem(toString(Disc) + 'TopPrevious');
+			Disc.style.transform = "rotate(" + localStorage.getItem(toString(Disc) + 'RotationPrevious') + "deg)";
 			
 			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
-			localStorage.setItem(DiscStore[N] + 'ResetPreviousLeft', localStorage.getItem(DiscStore[N] + 'LeftPrevious'));
-			localStorage.setItem(DiscStore[N] + 'ResetPreviousTop', localStorage.getItem(DiscStore[N] + 'TopPrevious'));
-			localStorage.setItem(DiscStore[N] + 'ResetPreviousRotation', localStorage.getItem(DiscStore[N] + 'RotationPrevious'));
-			localStorage.setItem(DiscStore[N] + 'Left', localStorage.getItem(DiscStore[N] + 'LeftPrevious'));
-			localStorage.setItem(DiscStore[N] + 'Top', localStorage.getItem(DiscStore[N] + 'TopPrevious'));
-			localStorage.setItem(DiscStore[N] + 'Rotation', localStorage.getItem(DiscStore[N] + 'RotationPrevious'));
+			localStorage.setItem(toString(Disc) + 'ResetPreviousLeft', localStorage.getItem(toString(Disc) + 'LeftPrevious'));
+			localStorage.setItem(toString(Disc) + 'ResetPreviousTop', localStorage.getItem(toString(Disc) + 'TopPrevious'));
+			localStorage.setItem(toString(Disc) + 'ResetPreviousRotation', localStorage.getItem(toString(Disc) + 'RotationPrevious'));
+			localStorage.setItem(toString(Disc) + 'Left', localStorage.getItem(toString(Disc) + 'LeftPrevious'));
+			localStorage.setItem(toString(Disc) + 'Top', localStorage.getItem(toString(Disc) + 'TopPrevious'));
+			localStorage.setItem(toString(Disc) + 'Rotation', localStorage.getItem(toString(Disc) + 'RotationPrevious'));
 			
 		}
 
