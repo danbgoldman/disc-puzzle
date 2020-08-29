@@ -54,7 +54,7 @@
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
 	for the default X position and same for defaultY except for the Y position.*/
 	
-	class disc {
+	class Disc {
 		constructor(name, size, defaultX, defaultY) {
 			this.name = name;
 			this.size = size;
@@ -69,17 +69,17 @@
 		}
 	}
 	
-	var DiscClass = [new disc("Disc1", 174, 15, 45), 
-		new disc("Disc2", 57, 132, 428), 
-		new disc("Disc3", 85, 104, 310), 
-		new disc("Disc4", 174, 15, 85), 
-		new disc("Disc5", 70, 119, 393), 
-		new disc("Disc6", 41, 148, 478), 
-		new disc("Disc7", 42, 147, 457), 
-		new disc("Disc8", 115, 74, 252), 
-		new disc("Disc9", 174, 15, 125), 
-		new disc("Disc10", 80, 109, 353), 
-		new disc("Disc11", 174, 15, 165)
+	var discs = [new Disc("Disc1", 174, 15, 45), 
+		new Disc("Disc2", 57, 132, 428), 
+		new Disc("Disc3", 85, 104, 310), 
+		new Disc("Disc4", 174, 15, 85), 
+		new Disc("Disc5", 70, 119, 393), 
+		new Disc("Disc6", 41, 148, 478), 
+		new Disc("Disc7", 42, 147, 457), 
+		new Disc("Disc8", 115, 74, 252), 
+		new Disc("Disc9", 174, 15, 125), 
+		new Disc("Disc10", 80, 109, 353), 
+		new Disc("Disc11", 174, 15, 165)
 	];
 	
 	//Declares reset check varaible.
@@ -88,23 +88,22 @@
 	/*This loop goes through all the previously stored positions of the discs and sets the discs to those
 	positions*/
 	for (var i = 0; i < 11; i++) {
-		let DiscReceive = DiscClass[i].name;
-		let Disc = DiscClass[i].element;
-		var DiscLeft = parseFloat(localStorage.getItem(DiscReceive + 'Left'));
-		var DiscTop = parseFloat(localStorage.getItem(DiscReceive + 'Top'));
-		var DiscRotate = parseFloat(localStorage.getItem(DiscReceive + 'Rotation'));
+		let disc = discs[i];
+		var discLeft = parseFloat(localStorage.getItem(disc.name + 'Left'));
+		var discTop = parseFloat(localStorage.getItem(disc.name + 'Top'));
+		var discRotate = parseFloat(localStorage.getItem(disc.name + 'Rotation'));
 		
-		Disc.style.left = DiscLeft + 'px';
-		Disc.style.top = DiscTop +'px';
-		Disc.style.transform = "rotate(" + DiscRotate + "deg)";
+		disc.element.style.left = discLeft + 'px';
+		disc.element.style.top = discTop +'px';
+		disc.element.style.transform = "rotate(" + discRotate + "deg)";
 		
 		/*These store the default position of the discs if the back button were to be pressed.*/
-		localStorage.setItem(DiscReceive + 'LeftPrevious', DiscClass[i].defaultX);
-		localStorage.setItem(DiscReceive + 'TopPrevious', DiscClass[i].defaultY);
-		localStorage.setItem(DiscReceive + 'RotationPrevious', '0');
-		localStorage.setItem(DiscReceive + 'ResetPreviousLeft', Disc.style.left);
-		localStorage.setItem(DiscReceive + 'ResetPreviousTop', Disc.style.top);
-		localStorage.setItem(DiscReceive + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
+		localStorage.setItem(disc.name + 'LeftPrevious', disc.defaultX);
+		localStorage.setItem(disc.name + 'TopPrevious', disc.defaultY);
+		localStorage.setItem(disc.name + 'RotationPrevious', '0');
+		localStorage.setItem(disc.name + 'ResetPreviousLeft', disc.element.style.left);
+		localStorage.setItem(disc.name + 'ResetPreviousTop', disc.element.style.top);
+		localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.element.style.transform.match(/\d+/)[0]);
 	}
 
 	onmousedown = function DiskMove(event) {
@@ -124,7 +123,7 @@
 		ResetCheck = 0;
 	
 		//These two specify which specific disk we're working with
-		let disc = DiscClass[discnum];
+		let disc = discs[discnum];
 		
 		//stores the last element touched for the back button
 		localStorage.setItem('LastDisc', event.target.id.match(/\d+/)[0]);
@@ -284,25 +283,20 @@
 		
 		//Sets all discs to their default positions
 		for (var i = 0;i < 11; i++) {
-			let Disc = DiscClass[i].element;
-			Disc.style.left = DiscClass[i].defaultX + 'px';
-			Disc.style.top = DiscClass[i].defaultY + 'px';
+			let discElement = discs[i].element;
+			discElement.style.left = discs[i].defaultX + 'px';
+			discElement.style.top = discs[i].defaultY + 'px';
 			
-		}
-		
-		//Resets all rotations and deletes the storage for the discs so that
-		//when the browser refreshes it doesn't go back to before it reset.
-		for (var i = 0;i < 11; i++) {
-			let Disc = DiscClass[i].element;
-			let DiscName = DiscClass[i].name;
+			//Resets all rotations and deletes the storage for the discs so that
+			//when the browser refreshes it doesn't go back to before it reset.
 			
 			//sets random disk rotation
-			Disc.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+			discElement.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
 			
 			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
-			localStorage.removeItem(DiscName + 'Left');
-			localStorage.removeItem(DiscName + 'Top');
-			localStorage.removeItem(DiscName + 'Rotation');
+			localStorage.removeItem(discs[i].name + 'Left');
+			localStorage.removeItem(discs[i].name + 'Top');
+			localStorage.removeItem(discs[i].name + 'Rotation');
 			
 		}
 		
@@ -316,16 +310,16 @@
 			/*This loop runs through each position of each disc before the reset button was pressed.
 			It then sets those positions of teh discs to the ones before the reset button.*/
 			for (var i = 0; i < 11; i++) {
-				let Disc = DiscClass[i].element;
-				let DiscName = DiscClass[i].name;
-				Disc.style.left = localStorage.getItem(DiscName + 'ResetPreviousLeft');
-				Disc.style.top = localStorage.getItem(DiscName + 'ResetPreviousTop');
-				Disc.style.transform = "rotate(" + localStorage.getItem(DiscName + 'ResetPreviousRotation') + "deg)";
+				let discElement = discs[i].element;
+				let discName = discs[i].name;
+				discElement.style.left = localStorage.getItem(discName + 'ResetPreviousLeft');
+				discElement.style.top = localStorage.getItem(discName + 'ResetPreviousTop');
+				discElement.style.transform = "rotate(" + localStorage.getItem(discName + 'ResetPreviousRotation') + "deg)";
 				
 				//This sets the "main" storage so that when the browser refreshes it doesn't go back to the "main" position
-				localStorage.setItem(DiscName + 'Left', localStorage.getItem(DiscName + 'ResetPreviousLeft'));
-				localStorage.setItem(DiscName + 'Top', localStorage.getItem(DiscName + 'ResetPreviousTop'));
-				localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName + 'ResetPreviousRotation'));
+				localStorage.setItem(discName + 'Left', localStorage.getItem(discName + 'ResetPreviousLeft'));
+				localStorage.setItem(discName + 'Top', localStorage.getItem(discName + 'ResetPreviousTop'));
+				localStorage.setItem(discName + 'Rotation', localStorage.getItem(discName + 'ResetPreviousRotation'));
 			}
 			
 			ResetCheck = 0;
@@ -336,17 +330,17 @@
 			let DiscName = DiscClass[parseFloat(localStorage.getItem('LastDisc')) - 1].name;
 			
 			//This function just returns the one disc the user touched to where it was before
-			Disc.style.left = localStorage.getItem(DiscName + 'LeftPrevious');
-			Disc.style.top = localStorage.getItem(DiscName + 'TopPrevious');
-			Disc.style.transform = "rotate(" + localStorage.getItem(DiscName + 'RotationPrevious') + "deg)";
+			discElement.style.left = localStorage.getItem(discName + 'LeftPrevious');
+			discElement.style.top = localStorage.getItem(discName + 'TopPrevious');
+			discElement.style.transform = "rotate(" + localStorage.getItem(discName + 'RotationPrevious') + "deg)";
 			
 			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
-			localStorage.setItem(DiscName + 'ResetPreviousLeft', localStorage.getItem(DiscName + 'LeftPrevious'));
-			localStorage.setItem(DiscName + 'ResetPreviousTop', localStorage.getItem(DiscName + 'TopPrevious'));
-			localStorage.setItem(DiscName + 'ResetPreviousRotation', localStorage.getItem(DiscName + 'RotationPrevious'));
-			localStorage.setItem(DiscName + 'Left', localStorage.getItem(DiscName + 'LeftPrevious'));
-			localStorage.setItem(DiscName + 'Top', localStorage.getItem(DiscName + 'TopPrevious'));
-			localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName + 'RotationPrevious'));
+			localStorage.setItem(discName + 'ResetPreviousLeft', localStorage.getItem(discName + 'LeftPrevious'));
+			localStorage.setItem(discName + 'ResetPreviousTop', localStorage.getItem(discName + 'TopPrevious'));
+			localStorage.setItem(discName + 'ResetPreviousRotation', localStorage.getItem(discName + 'RotationPrevious'));
+			localStorage.setItem(discName + 'Left', localStorage.getItem(discName + 'LeftPrevious'));
+			localStorage.setItem(discName + 'Top', localStorage.getItem(discName + 'TopPrevious'));
+			localStorage.setItem(discName + 'Rotation', localStorage.getItem(discName + 'RotationPrevious'));
 			
 		}
 
