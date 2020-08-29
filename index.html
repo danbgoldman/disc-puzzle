@@ -84,9 +84,26 @@
 			/* This stores the place of where the Disc was if the player were to want 
 			to close the window and come back later. */
 			
-			localStorage.setItem(disc.name + 'Left', disc.element.style.left);
-			localStorage.setItem(disc.name + 'Top', disc.element.style.top);
-			localStorage.setItem(disc.name + 'Rotation', disc.element.style.transform.match(/\d+/)[0]);
+			localStorage.setItem(this.name + 'Left', this.element.style.left);
+			localStorage.setItem(this.name + 'Top', this.element.style.top);
+			localStorage.setItem(this.name + 'Rotation', this.element.style.transform.match(/\d+/)[0]);
+		}
+		
+		resetTransform() {
+			this.element.style.left = this.defaultX + 'px';
+			this.element.style.top = this.defaultY + 'px';
+			
+			//Resets all rotations and deletes the storage for the discs so that
+			//when the browser refreshes it doesn't go back to before it reset.
+			
+			//sets random disk rotation
+			this.rotation = Math.floor((Math.random() * 360) + 1);
+			this.element.style.transform = "rotate(" + this.rotation + "deg)";
+			
+			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
+			localStorage.removeItem(this.name + 'Left');
+			localStorage.removeItem(this.name + 'Top');
+			localStorage.removeItem(this.name + 'Rotation');
 		}
 	}
 	
@@ -273,31 +290,13 @@
 		
 	}
 	
-	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. Aswell as the rotations.*/
+	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. As well as the rotations.*/
 	ResetButton.onmousedown = function() {
 		//We must check to see if reset button is pressed because a different "back" function runs
 		ResetCheck = 1;
 		
 		//Sets all discs to their default positions
-		for (var i = 0;i < 11; i++) {
-			let discElement = discs[i].element;
-			discElement.style.left = discs[i].defaultX + 'px';
-			discElement.style.top = discs[i].defaultY + 'px';
-			
-			//Resets all rotations and deletes the storage for the discs so that
-			//when the browser refreshes it doesn't go back to before it reset.
-			
-			//sets random disk rotation
-			discs[i].rotation = Math.floor((Math.random() * 360) + 1);
-			discElement.style.transform = "rotate(" + discs[i].rotation + "deg)";
-			
-			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
-			localStorage.removeItem(discs[i].name + 'Left');
-			localStorage.removeItem(discs[i].name + 'Top');
-			localStorage.removeItem(discs[i].name + 'Rotation');
-			
-		}
-		
+		discs.forEach(disc => disc.resetTransform());
 	}
 	
 	//This function undoes the user's previous action
