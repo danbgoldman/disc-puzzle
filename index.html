@@ -7,70 +7,222 @@
 
 <body style="height: 200px">
 
-  <p>Drag the ball with the mouse. Press shift key to rotate the ball instead.</p>
-
-  <img src="assets/ball.svg" style="cursor: pointer; position: absolute; z-index: 1000; left: 250px; top: 250px;" width="100" height="100" id="ball">
-
-
+  <p>Drag the Disks to the pegs. Press Shift to rotate the disks. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
+  
+  
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 779px; top: 196px;" width="20" height="20" id="Peg2">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 904px; top: 254px;" width="20" height="20" id="Peg3">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 212px;" width="20" height="20" id="Peg4">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 768px; top: 320px;" width="20" height="20" id="Peg5">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 990px; top: 341px;" width="20" height="20" id="Peg6">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 696px; top: 400px;" width="20" height="20" id="Peg7">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 889px; top: 453px;" width="20" height="20" id="Peg8">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 553px; top: 555px;" width="20" height="20" id="Peg9">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 794px; top: 619px;" width="20" height="20" id="Peg10">
+  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 554px;" width="20" height="20" id="Peg11">
+  <img src="assets/Disc 1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 45px;" id="Disc1">
+  <img src="assets/Disc 4.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 85px;" id="Disc4">
+  <img src="assets/Disc 9.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 125px;" id="Disc9">
+  <img src="assets/Disc 11.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 165px;" id="Disc11">
+  <img src="assets/Disc 8.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 74px; top: 252px;" id="Disc8">
+  <img src="assets/Disc 3.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 104px; top: 310px;" id="Disc3">
+  <img src="assets/Disc 10.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 109px; top: 353px;" id="Disc10">
+  <img src="assets/Disc 5.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 119px; top: 393px;" id="Disc5">
+  <img src="assets/Disc 2.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 132px; top: 428px;" id="Disc2">
+  <img src="assets/Disc 7.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 147px; top: 457px;" id="Disc7">
+  <img src="assets/Disc 6.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 148px; top: 478px;" id="Disc6">
+  
+  
+  
   <script>
 	"use strict";
-	let ball = document.getElementById("ball"); // get the ball image element
-
+	// get the disc image element
 	// Override the default drag and drop behavior of the browser.
-	ball.ondragstart = function() {	return false; };
-
 	/* it's very inconvenient to find out how much an element has already been rotated, so
 	   we're going to store it in the object to make things simpler. Default rotation is zero. */
-	ball.rotation = 0;
+	let discElements = [];
+	let noDragFunc = function() { return false; };
+	for (i=0; i<11; i++) {
+		let disc = document.getElementById("Disc" + (i + 1));
+		disc.ondragstart = noDragFunc;
+		disc.rotation = 0;
+    }
+	let ResetButton = document.getElementById("ResetButton");
+	let BackButton = document.getElementById("BackButton");
+	
+	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
+	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
+	for the default X position and same for defaultY except for the Y position.*/
+	
+	class disc {
+		constructor(name, size, defaultX, defaultY) {
+			this.name = name;
+			this.size = size;
+			this.defaultX = defaultX; 
+			this.defaultY = defaultY;
+			this.rotation = 0; /* rotation is a prop of the "Disc" object, not the HTML element, so some other code would need to change. */
 
-	ball.onmousedown = function(event) {
-		// When we click the mouse on the ball, we need to store some things.
+			this.element = document.getElementById(name);
+			this.element.ondragstart = noDragFunc;
+		}
+	}
+	
+	var DiscClass = [new disc("Disc1", 174, 15, 45), 
+		new disc("Disc2", 57, 132, 428), 
+		new disc("Disc3", 85, 104, 310), 
+		new disc("Disc4", 174, 15, 85), 
+		new disc("Disc5", 70, 119, 393), 
+		new disc("Disc6", 41, 148, 478), 
+		new disc("Disc7", 42, 147, 457), 
+		new disc("Disc8", 115, 74, 252), 
+		new disc("Disc9", 174, 15, 125), 
+		new disc("Disc10", 80, 109, 353), 
+		new disc("Disc11", 174, 15, 165)
+	];
+	
+	//Declares reset check varaible.
+	var ResetCheck;
+	
+	/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted*/
+	for (var i = 0; i < 11; i++) {
+		let Disc = DiscClass[i].element;
+		Disc.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+	}
+	
+	/*This loop goes through all the previously stored positions of the discs and sets the discs to those
+	positions*/
+	for (var i = 0; i < 11; i++) {
+		let DiscReceive = DiscClass[i].name;
+		let Disc = DiscClass[i].element;
+		var DiscLeft = parseFloat(localStorage.getItem(DiscReceive + 'Left'));
+		var DiscTop = parseFloat(localStorage.getItem(DiscReceive + 'Top'));
+		var DiscRotate = parseFloat(localStorage.getItem(DiscReceive + 'Rotation'));
+		
+		Disc.style.left = DiscLeft + 'px';
+		Disc.style.top = DiscTop +'px';
+		Disc.style.transform = "rotate(" + DiscRotate + "deg)";
+		
+		/*These store the default position of the discs if the back button were to be pressed.*/
+		localStorage.setItem(DiscReceive + 'LeftPrevious', DiscClass[i].defaultX);
+		localStorage.setItem(DiscReceive + 'TopPrevious', DiscClass[i].defaultY);
+		localStorage.setItem(DiscReceive + 'RotationPrevious', '0');
+		localStorage.setItem(DiscReceive + 'ResetPreviousLeft', Disc.style.left);
+		localStorage.setItem(DiscReceive + 'ResetPreviousTop', Disc.style.top);
+		localStorage.setItem(DiscReceive + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
+	}
+
+	onmousedown = function DiskMove(event) {
+		/*Sees if the back button is pressed so that the correctly
+		disc is beind moved in the BackButtonFunction.*/
+		if (event.target.id === 'BackButton') {
+			BackButtonFunction(event);
+			
+		}
+		
+		/*This function checks to see if the click is on a disc or not, and if it's not
+		it stops the function from running.*/
+		var A = 0;
+		for (i = 0; i < 11; i++) {
+			if (event.target.id === DiscClass[i].name) {
+				A = 1;
+			};
+		}
+		if (A != 1) {	return; }
+		
+		//So that back button works correctly when moving an object after reseting
+		ResetCheck = 0;
+	
+		//These two specify which specific disk we're working with
+		let DSize = DiscClass[(event.target.id.match(/\d+/)[0]) - 1].size;
+		let Disc = DiscClass[(event.target.id.match(/\d+/)[0]) - 1].element;
+		let DiscName = DiscClass[(event.target.id.match(/\d+/)[0]) - 1].name;
+		
+		//stores the last element touched for the back button
+		localStorage.setItem('LastDisc', event.target.id.match(/\d+/)[0]);
+		
+		/*These store the initial point of where the disc is when first clicked.*/
+		localStorage.setItem(DiscName + 'LeftPrevious', Disc.style.left);
+		localStorage.setItem(DiscName + 'TopPrevious', Disc.style.top);
+		localStorage.setItem(DiscName + 'RotationPrevious', (Disc.style.transform.match(/\d+/)[0]));
 
 		// This object has the pixel positions of each edge of the ball element.
-		let rect = ball.getBoundingClientRect();
-
+		let rect = Disc.getBoundingClientRect();
+		
 		// This object stores how we handle mouse move events. It starts empty.
 		var moveHandler;
-
+		
 		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
 		   to switch to rotation mode for now, but it could be done using a tool mode or some
 		   other way. */
-
+		
 		if (!event.shiftKey) {
+		
+			/*The Disc may already have some rotation to it. If that is so
+			the "top left corner" isn't necissarily the top left corner due
+			to the rotation. To offset this simply find the center of the Disc
+			and subtract half of the height and width of the Disc. This sets
+			the true top left of the Disc*/
+			let DiscX = ((rect.left + rect.right) / 2) - DSize;
+			let DiscY = ((rect.top + rect.bottom) / 2) - DSize;
+			
 			/* To handle dragging mode, we just keep track of where we started, relative to the
 			   top left of the element. */
-			let offsetX = event.pageX - rect.left;
-			let offsetY = event.pageY - rect.top;
+			let offsetX = event.pageX - DiscX;
+			let offsetY = event.pageY - DiscY;
 
 			function moveAt(event) {
 				/* As we move the mouse, keep that offset constant with the current position. */
-				ball.style.left = event.pageX - offsetX + 'px';
-				ball.style.top = event.pageY - offsetY + 'px';
+				Disc.style.left = event.pageX - offsetX + 'px';
+				Disc.style.top = event.pageY - offsetY + 'px';
+				
+				/*getting the constant postition of where the disc is*/
+				let rect = Disc.getBoundingClientRect();
+			
+				//Array is set up for each peg postition in the X and Y cordinates.
+				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
+				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
+			
+				/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
+				for (var i = 0; i < 11; i++) {
+					let pegX = pegx[i];
+					let pegY = pegy[i];
+					if (Math.abs(((rect.left + rect.right) / 2) - pegX) < 50 && Math.abs(((rect.top + rect.bottom) / 2) - pegY) < 50) {
+						/*150 is derived from half the length and width of the disc png subtracted from half the length and width of the peg png(24).*/
+						Disc.style.left =  pegX - (DSize - 9) + "px";
+						Disc.style.top = pegY - (DSize - 9) + "px";
+						
+					} 
+					
+				}
+				
 			}
 
+
 			moveHandler = moveAt;
+			
 		} else {
 			/* Now we have to handle rotation mode. In this mode we care about an
 			   imaginary vector from the center of the object to the mouse position.
 			   As we move the mouse around, the angle between the original vector and
 			   the current vector is how much we need to rotate. So we will need to keep
 			   track of the center. */
-
+		
 			let centerX = (rect.left + rect.right) / 2;
 			let centerY = (rect.top + rect.bottom) / 2;
-
+			
 			/* And the other point on the line is the mouse. By subtracting the center,
 			   we can find the angle of the line. */
 
 			let startVecX = event.pageX - centerX;
 			let startVecY = event.pageY - centerY;
-
+			
 			/* CSS uses degrees, so we'll convert to those units */
 			let radiansToDegrees = 180 / Math.PI;
-
+			
 			/* We can get the starting angle using the arctangent: */
 			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
-
+			
 			/* One final complication: Sometimes the object already has some rotation! In that
 			   case we would compute the final rotation as
 			
@@ -83,9 +235,10 @@
 			
 			   angleOffset only needs to be computed once: */
 
-			let angleOffset = ball.rotation - startAngle;
+			let angleOffset = Disc.rotation - startAngle;
 
 			function rotateAt(event) {
+				
 				/* Find the vector from center to current mouse position. */
 				let endVecX = event.pageX - centerX;
 				let endVecY = event.pageY - centerY;
@@ -94,34 +247,123 @@
 				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
 
 				/* Using the formula above, update the ball rotation. */
-				ball.rotation = Math.round(endAngle + angleOffset);
+				Disc.rotation = Math.round(endAngle + angleOffset);
 
 				/* Replace negative rotations with positive ones. */
-				if (ball.rotation < 0) ball.rotation += 360;
+				if (Disc.rotation < 0) Disc.rotation += 360;
 
 				/* Assign the CSS transform attribute */
-				ball.style.transform = "rotate(" + ball.rotation + "deg)";
+				Disc.style.transform = "rotate(" + Disc.rotation + "deg)";
 			}
 
 			moveHandler = rotateAt;
+			
 		}
-
+		
 		/* Assign the appropriate handler. Note that an object covering the whole window
 		   - in this case the document itself - has to be the target, since we
 		   might move the pointer off the object. */
 		document.addEventListener('mousemove', moveHandler);
-
+		
 		// When the move is over, remove the event listeners.
 		document.onmouseup = function() {
 			document.removeEventListener('mousemove', moveHandler);
 			document.onmouseup = null;
+			
+			/*This stores the place of where the Disc was if the player were to want 
+			to close the window and come back later. Since localy storing requires 
+			a string instead of a variable or storage type, we can't use the "Disc" 
+			shortcut. So we must use another array to sort this one out.*/
+			localStorage.setItem(DiscName + 'Left', Disc.style.left);
+			localStorage.setItem(DiscName + 'Top', Disc.style.top);
+			localStorage.setItem(DiscName + 'Rotation', Disc.style.transform.match(/\d+/)[0]);
+			
+			/*These store the previous position of the disc if the reset button where to be pressed. 
+			This is meant for people who accidentally press the reset button and want to go back to 
+			what they had.*/
+			localStorage.setItem(DiscName + 'ResetPreviousLeft', Disc.style.left);
+			localStorage.setItem(DiscName + 'ResetPreviousTop', Disc.style.top);
+			localStorage.setItem(DiscName + 'ResetPreviousRotation', Disc.style.transform.match(/\d+/)[0]);
+			
 		};
+		
+	}
+	
+	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. Aswell as the rotations.*/
+	ResetButton.onmousedown = function() {
+		//We must check to see if reset button is pressed because a different "back" function runs
+		ResetCheck = 1;
+		
+		//Sets all discs to their default positions
+		for (var i = 0;i < 11; i++) {
+			let Disc = DiscClass[i].element;
+			Disc.style.left = DiscClass[i].defaultX + 'px';
+			Disc.style.top = DiscClass[i].defaultY + 'px';
+			
+		}
+		
+		//Resets all rotations and deletes the storage for the discs so that
+		//when the browser refreshes it doesn't go back to before it reset.
+		for (var i = 0;i < 11; i++) {
+			let Disc = DiscClass[i].element;
+			let DiscName = DiscClass[i].name;
+			
+			//sets random disk rotation
+			Disc.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+			
+			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
+			localStorage.removeItem(DiscName + 'Left');
+			localStorage.removeItem(DiscName + 'Top');
+			localStorage.removeItem(DiscName + 'Rotation');
+			
+		}
+		
+	}
+	
+	//This function undoes the user's previous action
+	function BackButtonFunction() {
+		//Checks if reset button has been pressed.
+		if (ResetCheck === 1) {
+		
+			/*This loop runs through each position of each disc before the reset button was pressed.
+			It then sets those positions of teh discs to the ones before the reset button.*/
+			for (var i = 0; i < 11; i++) {
+				let Disc = DiscClass[i].element;
+				let DiscName = DiscClass[i].name;
+				Disc.style.left = localStorage.getItem(DiscName + 'ResetPreviousLeft');
+				Disc.style.top = localStorage.getItem(DiscName + 'ResetPreviousTop');
+				Disc.style.transform = "rotate(" + localStorage.getItem(DiscName + 'ResetPreviousRotation') + "deg)";
+				
+				//This sets the "main" storage so that when the browser refreshes it doesn't go back to the "main" position
+				localStorage.setItem(DiscName + 'Left', localStorage.getItem(DiscName + 'ResetPreviousLeft'));
+				localStorage.setItem(DiscName + 'Top', localStorage.getItem(DiscName + 'ResetPreviousTop'));
+				localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName + 'ResetPreviousRotation'));
+			}
+			
+			ResetCheck = 0;
+			
+		} else {
+			//receives info from the computer of which disc was touched last
+			let Disc = DiscClass[parseFloat(localStorage.getItem('LastDisc')) - 1].element;
+			let DiscName = DiscClass[parseFloat(localStorage.getItem('LastDisc')) - 1].name;
+			
+			//This function just returns the one disc the user touched to where it was before
+			Disc.style.left = localStorage.getItem(DiscName + 'LeftPrevious');
+			Disc.style.top = localStorage.getItem(DiscName + 'TopPrevious');
+			Disc.style.transform = "rotate(" + localStorage.getItem(DiscName + 'RotationPrevious') + "deg)";
+			
+			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
+			localStorage.setItem(DiscName + 'ResetPreviousLeft', localStorage.getItem(DiscName) + 'LeftPrevious'));
+			localStorage.setItem(DiscName + 'ResetPreviousTop', localStorage.getItem(DiscName + 'TopPrevious'));
+			localStorage.setItem(DiscName + 'ResetPreviousRotation', localStorage.getItem(DiscName + 'RotationPrevious'));
+			localStorage.setItem(DiscName + 'Left', localStorage.getItem(DiscName + 'LeftPrevious'));
+			localStorage.setItem(DiscName + 'Top', localStorage.getItem(DiscName + 'TopPrevious'));
+			localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName) + 'RotationPrevious'));
+			
+		}
 
-	};
-
+	}
+	
   </script>
-
-
-
 
 </body></html>
