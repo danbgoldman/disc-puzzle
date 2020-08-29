@@ -289,7 +289,8 @@
 			//when the browser refreshes it doesn't go back to before it reset.
 			
 			//sets random disk rotation
-			discElement.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+			discs[i].rotation = Math.floor((Math.random() * 360) + 1);
+			discElement.style.transform = "rotate(" + discs[i].rotation + "deg)";
 			
 			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
 			localStorage.removeItem(discs[i].name + 'Left');
