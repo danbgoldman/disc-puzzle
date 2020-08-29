@@ -64,8 +64,11 @@
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
+			this.element.onmousedown = diskMove;
 			/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted */
 			this.element.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+			
+			this.element.disc = this; // so we can do a reverse lookup in diskMove
 		}
 	}
 	
@@ -106,7 +109,7 @@
 		localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.element.style.transform.match(/\d+/)[0]);
 	}
 
-	onmousedown = function DiskMove(event) {
+	function diskMove(event) {
 		/*Sees if the back button is pressed so that the correctly
 		disc is beind moved in the BackButtonFunction.*/
 		if (event.target.id === 'BackButton') {
@@ -114,16 +117,11 @@
 			
 		}
 		
-		/*This function checks to see if the click is on a disc or not, and if it's not
-		it stops the function from running.*/
-		if (event.target.id.substr(0,4) != "Disc") { return; }
-		let discnum = (event.target.id.match(/\d+/)[0]) - 1;
-		
 		//So that back button works correctly when moving an object after reseting
 		ResetCheck = 0;
 	
-		//These two specify which specific disk we're working with
-		let disc = discs[discnum];
+		// Every disc element has a disc object attached to it
+		let disc = event.target.disc;
 		
 		//stores the last element touched for the back button
 		localStorage.setItem('LastDisc', event.target.id.match(/\d+/)[0]);
@@ -303,7 +301,7 @@
 	}
 	
 	//This function undoes the user's previous action
-	function BackButtonFunction() {
+    BackButton.onmousedown = function() {
 		//Checks if reset button has been pressed.
 		if (ResetCheck === 1) {
 		
@@ -326,8 +324,9 @@
 			
 		} else {
 			//receives info from the computer of which disc was touched last
-			let Disc = DiscClass[parseFloat(localStorage.getItem('LastDisc')) - 1].element;
-			let DiscName = DiscClass[parseFloat(localStorage.getItem('LastDisc')) - 1].name;
+			let discNum = parseFloat(localStorage.getItem('LastDisc')) - 1;
+			let discElement = discs[discNum].element;
+			let discName = discs[discNum].name;
 			
 			//This function just returns the one disc the user touched to where it was before
 			discElement.style.left = localStorage.getItem(discName + 'LeftPrevious');
