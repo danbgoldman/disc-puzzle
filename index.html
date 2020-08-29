@@ -42,11 +42,6 @@
 	/* it's very inconvenient to find out how much an element has already been rotated, so
 	   we're going to store it in the object to make things simpler. Default rotation is zero. */
 	let noDragFunc = function() { return false; };
-	for (i=0; i<11; i++) {
-		let disc = document.getElementById("Disc" + (i + 1));
-		disc.ondragstart = noDragFunc;
-		disc.rotation = 0;
-    }
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
 	
@@ -69,10 +64,34 @@
 			this.element.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
 			
 			this.element.disc = this; // so we can do a reverse lookup in diskMove
+			
+			this.loadTransform(); // load position and rotation from localStorage
+		}
+		
+		 loadTransform() {
+			/* This function loads the position and rotation from localStorage */
+			 
+			var discLeft = parseFloat(localStorage.getItem(this.name + 'Left'));
+			var discTop = parseFloat(localStorage.getItem(this.name + 'Top'));
+			var discRotate = parseFloat(localStorage.getItem(this.name + 'Rotation'));
+		
+			this.element.style.left = discLeft + 'px';
+			this.element.style.top = discTop +'px';
+			this.element.style.transform = "rotate(" + discRotate + "deg)";
+		}
+		
+		saveTransform() {
+			/*This stores the place of where the Disc was if the player were to want 
+			to close the window and come back later. */
+			
+			localStorage.setItem(disc.name + 'Left', disc.element.style.left);
+			localStorage.setItem(disc.name + 'Top', disc.element.style.top);
+			localStorage.setItem(disc.name + 'Rotation', disc.element.style.transform.match(/\d+/)[0]);
 		}
 	}
 	
-	var discs = [new Disc("Disc1", 174, 15, 45), 
+	var discs = [
+		new Disc("Disc1", 174, 15, 45), 
 		new Disc("Disc2", 57, 132, 428), 
 		new Disc("Disc3", 85, 104, 310), 
 		new Disc("Disc4", 174, 15, 85), 
@@ -92,13 +111,6 @@
 	positions*/
 	for (var i = 0; i < 11; i++) {
 		let disc = discs[i];
-		var discLeft = parseFloat(localStorage.getItem(disc.name + 'Left'));
-		var discTop = parseFloat(localStorage.getItem(disc.name + 'Top'));
-		var discRotate = parseFloat(localStorage.getItem(disc.name + 'Rotation'));
-		
-		disc.element.style.left = discLeft + 'px';
-		disc.element.style.top = discTop +'px';
-		disc.element.style.transform = "rotate(" + discRotate + "deg)";
 		
 		/*These store the default position of the discs if the back button were to be pressed.*/
 		localStorage.setItem(disc.name + 'LeftPrevious', disc.defaultX);
@@ -110,13 +122,6 @@
 	}
 
 	function diskMove(event) {
-		/*Sees if the back button is pressed so that the correctly
-		disc is beind moved in the BackButtonFunction.*/
-		if (event.target.id === 'BackButton') {
-			BackButtonFunction(event);
-			
-		}
-		
 		//So that back button works correctly when moving an object after reseting
 		ResetCheck = 0;
 	
@@ -255,14 +260,8 @@
 			document.removeEventListener('mousemove', moveHandler);
 			document.onmouseup = null;
 			
-			/*This stores the place of where the Disc was if the player were to want 
-			to close the window and come back later. Since localy storing requires 
-			a string instead of a variable or storage type, we can't use the "Disc" 
-			shortcut. So we must use another array to sort this one out.*/
-			localStorage.setItem(disc.name + 'Left', disc.element.style.left);
-			localStorage.setItem(disc.name + 'Top', disc.element.style.top);
-			localStorage.setItem(disc.name + 'Rotation', disc.element.style.transform.match(/\d+/)[0]);
-			
+			disc.saveTransform();
+						
 			/*These store the previous position of the disc if the reset button where to be pressed. 
 			This is meant for people who accidentally press the reset button and want to go back to 
 			what they had.*/
