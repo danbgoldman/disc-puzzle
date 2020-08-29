@@ -353,12 +353,12 @@
 			Disc.style.transform = "rotate(" + localStorage.getItem(DiscName + 'RotationPrevious') + "deg)";
 			
 			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
-			localStorage.setItem(DiscName + 'ResetPreviousLeft', localStorage.getItem(DiscName) + 'LeftPrevious'));
+			localStorage.setItem(DiscName + 'ResetPreviousLeft', localStorage.getItem(DiscName + 'LeftPrevious'));
 			localStorage.setItem(DiscName + 'ResetPreviousTop', localStorage.getItem(DiscName + 'TopPrevious'));
 			localStorage.setItem(DiscName + 'ResetPreviousRotation', localStorage.getItem(DiscName + 'RotationPrevious'));
 			localStorage.setItem(DiscName + 'Left', localStorage.getItem(DiscName + 'LeftPrevious'));
 			localStorage.setItem(DiscName + 'Top', localStorage.getItem(DiscName + 'TopPrevious'));
-			localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName) + 'RotationPrevious'));
+			localStorage.setItem(DiscName + 'Rotation', localStorage.getItem(DiscName + 'RotationPrevious'));
 			
 		}
 
