@@ -57,13 +57,13 @@
 			this.size = size;
 			this.defaultX = defaultX; 
 			this.defaultY = defaultY;
-			this.rotation = 0; /* rotation is a prop of the "Disc" object, not the HTML element, so some other code would need to change. */
+			this.rotation = Math.floor((Math.random() * 360) + 1);
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
 			this.element.onmousedown = diskMove;
 			/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted */
-			this.element.style.transform = "rotate(" + Math.floor((Math.random() * 360) + 1) + "deg)";
+			this.element.style.transform = "rotate(" + this.rotation + "deg)";
 			
 			this.element.disc = this; // so we can do a reverse lookup in diskMove
 			
@@ -71,15 +71,19 @@
 		}
 		
 		 loadTransform() {
-			/* This function loads the position and rotation from localStorage */
-			 
-			var discLeft = parseFloat(localStorage.getItem(this.name + 'Left'));
-			var discTop = parseFloat(localStorage.getItem(this.name + 'Top'));
-			var discRotate = parseFloat(localStorage.getItem(this.name + 'Rotation'));
-		
-			this.element.style.left = discLeft + 'px';
-			this.element.style.top = discTop +'px';
-			this.element.style.transform = "rotate(" + discRotate + "deg)";
+			 /* This function loads the position and rotation from localStorage */
+			
+			 if (localStorage.getItem(this.name + 'Left') === null) {
+				 return;
+			 }
+			 var discLeft = parseFloat(localStorage.getItem(this.name + 'Left'));
+			 var discTop = parseFloat(localStorage.getItem(this.name + 'Top'));
+			 var discRotate = parseFloat(localStorage.getItem(this.name + 'Rotation'));
+	
+			 this.element.style.left = discLeft + 'px';
+			 this.element.style.top = discTop +'px';
+			 this.element.style.transform = "rotate(" + discRotate + "deg)";
+			 this.rotation = discRotate;
 		}
 		
 		saveTransform() {
@@ -88,7 +92,7 @@
 			
 			localStorage.setItem(this.name + 'Left', this.element.style.left);
 			localStorage.setItem(this.name + 'Top', this.element.style.top);
-			localStorage.setItem(this.name + 'Rotation', this.element.style.transform.match(/\d+/)[0]);
+			localStorage.setItem(this.name + 'Rotation', this.rotation);
 		}
 		
 		resetTransform() {
@@ -137,7 +141,7 @@
 		localStorage.setItem(disc.name + 'RotationPrevious', '0');
 		localStorage.setItem(disc.name + 'ResetPreviousLeft', disc.element.style.left);
 		localStorage.setItem(disc.name + 'ResetPreviousTop', disc.element.style.top);
-		localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.element.style.transform.match(/\d+/)[0]);
+		localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.rotation);
 	}
 
 	function diskMove(event) {
@@ -153,7 +157,7 @@
 		/*These store the initial point of where the disc is when first clicked.*/
 		localStorage.setItem(disc.name + 'LeftPrevious', disc.element.style.left);
 		localStorage.setItem(disc.name + 'TopPrevious', disc.element.style.top);
-		localStorage.setItem(disc.name + 'RotationPrevious', (disc.element.style.transform.match(/\d+/)[0]));
+		localStorage.setItem(disc.name + 'RotationPrevious', disc.rotation);
 
 		// This object has the pixel positions of each edge of the ball element.
 		let rect = disc.element.getBoundingClientRect();
@@ -286,7 +290,7 @@
 			what they had.*/
 			localStorage.setItem(disc.name + 'ResetPreviousLeft', disc.element.style.left);
 			localStorage.setItem(disc.name + 'ResetPreviousTop', disc.element.style.top);
-			localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.element.style.transform.match(/\d+/)[0]);
+			localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.rotation);
 			
 		};
 		
@@ -313,7 +317,9 @@
 				let discName = discs[i].name;
 				discElement.style.left = localStorage.getItem(discName + 'ResetPreviousLeft');
 				discElement.style.top = localStorage.getItem(discName + 'ResetPreviousTop');
-				discElement.style.transform = "rotate(" + localStorage.getItem(discName + 'ResetPreviousRotation') + "deg)";
+				let rotation = parseFloat(localStorage.getItem(discName + 'ResetPreviousRotation'));
+				discs[i].rotation = rotation;
+				discElement.style.transform = "rotate(" + rotation + "deg)";
 				
 				//This sets the "main" storage so that when the browser refreshes it doesn't go back to the "main" position
 				localStorage.setItem(discName + 'Left', localStorage.getItem(discName + 'ResetPreviousLeft'));
@@ -332,7 +338,9 @@
 			//This function just returns the one disc the user touched to where it was before
 			discElement.style.left = localStorage.getItem(discName + 'LeftPrevious');
 			discElement.style.top = localStorage.getItem(discName + 'TopPrevious');
-			discElement.style.transform = "rotate(" + localStorage.getItem(discName + 'RotationPrevious') + "deg)";
+			let rotation = parseFloat(localStorage.getItem(discName + 'RotationPrevious'));
+			discs[discNum].rotation = rotation;
+			discElement.style.transform = "rotate(" + rotation + "deg)";
 			
 			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
 			localStorage.setItem(discName + 'ResetPreviousLeft', localStorage.getItem(discName + 'LeftPrevious'));
