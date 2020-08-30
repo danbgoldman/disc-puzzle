@@ -46,6 +46,8 @@
 	let noDragFunc = function() { return false; };
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
+
+	let undoStack = new PersistentRingBuffer("undo", 20);
 	
 	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
@@ -67,33 +69,46 @@
 			
 			this.element.disc = this; // so we can do a reverse lookup in diskMove
 			
-			this.loadTransform(); // load position and rotation from localStorage
+			if (!this.loadTransform()) { // load position and rotation from localStorage
+				this.saveTransform(); // or save if it wasn't in localStorage
+			}
 		}
 		
-		 loadTransform() {
-			 /* This function loads the position and rotation from localStorage */
-			
-			 let xform = localStorage.getItem(this.name + 'Xform');
-			 if (xform === null) {
-				 return;
-			 }
-			 xform = JSON.parse(xform)
-	
-			 this.element.style.left = xform.left;
-			 this.element.style.top = xform.top;
-			 this.element.style.transform = "rotate(" + xform.rotate + "deg)";
-			 this.rotation = xform.rotate;
+		getSavedTransform() {
+			return JSON.parse(localStorage.getItem(this.name + 'Xform'));
+		}
+		
+		getTransform() {
+			return {
+				name: this.name, // we can use this to record the whole state
+				left: this.element.style.left,
+				top: this.element.style.top,
+				rotate: this.rotation
+			};
+		}
+		
+		setTransform(xform) {
+		    this.element.style.left = xform.left;
+			this.element.style.top = xform.top;
+			this.element.style.transform = "rotate(" + xform.rotate + "deg)";
+			this.rotation = xform.rotate;			
+		}
+		
+		loadTransform() {
+			/* This function loads the position and rotation from localStorage */
+			let xform = this.getSavedTransform();
+			if (xform == null) {
+				return false;
+			}
+		    this.setTransform(xform);
+			return true;
 		}
 		
 		saveTransform() {
 			/* This stores the place of where the Disc was if the player were to want 
 			to close the window and come back later. */
 			
-			localStorage.setItem(this.name + 'Xform', JSON.stringify({
-				left: this.element.style.left,
-				top: this.element.style.top,
-				rotate: this.rotation
-			}));
+			localStorage.setItem(this.name + 'Xform', JSON.stringify(this.getTransform()));
 		}
 		
 		resetTransform() {
@@ -126,38 +141,24 @@
 		new Disc("Disc11", 174, 15, 165)
 	];
 	
-	//Declares reset check varaible.
-	var ResetCheck;
-	
-	/*This loop goes through all the previously stored positions of the discs and sets the discs to those
-	positions*/
-	for (var i = 0; i < 11; i++) {
-		let disc = discs[i];
-		
-		/*These store the default position of the discs if the back button were to be pressed.*/
-		localStorage.setItem(disc.name + 'LeftPrevious', disc.defaultX);
-		localStorage.setItem(disc.name + 'TopPrevious', disc.defaultY);
-		localStorage.setItem(disc.name + 'RotationPrevious', '0');
-		localStorage.setItem(disc.name + 'ResetPreviousLeft', disc.element.style.left);
-		localStorage.setItem(disc.name + 'ResetPreviousTop', disc.element.style.top);
-		localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.rotation);
+	var discMap = {
+		Disc1: discs[0],
+		Disc2: discs[1],
+		Disc3: discs[2],
+		Disc4: discs[3],
+		Disc5: discs[4],
+		Disc6: discs[5],
+		Disc7: discs[6],
+		Disc8: discs[7],
+		Disc9: discs[8],
+		Disc10: discs[9],
+		Disc11: discs[10],																		
 	}
-
-	function diskMove(event) {
-		//So that back button works correctly when moving an object after reseting
-		ResetCheck = 0;
 	
+	function diskMove(event) {
 		// Every disc element has a disc object attached to it
 		let disc = event.target.disc;
 		
-		//stores the last element touched for the back button
-		localStorage.setItem('LastDisc', event.target.id.match(/\d+/)[0]);
-		
-		/*These store the initial point of where the disc is when first clicked.*/
-		localStorage.setItem(disc.name + 'LeftPrevious', disc.element.style.left);
-		localStorage.setItem(disc.name + 'TopPrevious', disc.element.style.top);
-		localStorage.setItem(disc.name + 'RotationPrevious', disc.rotation);
-
 		// This object has the pixel positions of each edge of the ball element.
 		let rect = disc.element.getBoundingClientRect();
 		
@@ -282,77 +283,36 @@
 			document.removeEventListener('mousemove', moveHandler);
 			document.onmouseup = null;
 			
-			disc.saveTransform();
-						
-			/*These store the previous position of the disc if the reset button where to be pressed. 
-			This is meant for people who accidentally press the reset button and want to go back to 
-			what they had.*/
-			localStorage.setItem(disc.name + 'ResetPreviousLeft', disc.element.style.left);
-			localStorage.setItem(disc.name + 'ResetPreviousTop', disc.element.style.top);
-			localStorage.setItem(disc.name + 'ResetPreviousRotation', disc.rotation);
+			// push the previously saved transform onto the stack
+			undoStack.push([disc.getSavedTransform()]);
 			
+			disc.saveTransform();
 		};
 		
 	}
 	
 	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. As well as the rotations.*/
 	ResetButton.onmousedown = function() {
-		//We must check to see if reset button is pressed because a different "back" function runs
-		ResetCheck = 1;
+		// Save the previous state in the undo stack
+		undoStack.push(discs.map(disc => disc.getSavedTransform()));
 		
 		//Sets all discs to their default positions
 		discs.forEach(disc => disc.resetTransform());
 	}
 	
 	//This function undoes the user's previous action
-    BackButton.onmousedown = function() {
-		//Checks if reset button has been pressed.
-		if (ResetCheck === 1) {
-		
-			/*This loop runs through each position of each disc before the reset button was pressed.
-			It then sets those positions of teh discs to the ones before the reset button.*/
-			for (var i = 0; i < 11; i++) {
-				let discElement = discs[i].element;
-				let discName = discs[i].name;
-				discElement.style.left = localStorage.getItem(discName + 'ResetPreviousLeft');
-				discElement.style.top = localStorage.getItem(discName + 'ResetPreviousTop');
-				let rotation = parseFloat(localStorage.getItem(discName + 'ResetPreviousRotation'));
-				discs[i].rotation = rotation;
-				discElement.style.transform = "rotate(" + rotation + "deg)";
-				
-				//This sets the "main" storage so that when the browser refreshes it doesn't go back to the "main" position
-				localStorage.setItem(discName + 'Left', localStorage.getItem(discName + 'ResetPreviousLeft'));
-				localStorage.setItem(discName + 'Top', localStorage.getItem(discName + 'ResetPreviousTop'));
-				localStorage.setItem(discName + 'Rotation', localStorage.getItem(discName + 'ResetPreviousRotation'));
-			}
-			
-			ResetCheck = 0;
-			
-		} else {
-			//receives info from the computer of which disc was touched last
-			let discNum = parseFloat(localStorage.getItem('LastDisc')) - 1;
-			let discElement = discs[discNum].element;
-			let discName = discs[discNum].name;
-			
-			//This function just returns the one disc the user touched to where it was before
-			discElement.style.left = localStorage.getItem(discName + 'LeftPrevious');
-			discElement.style.top = localStorage.getItem(discName + 'TopPrevious');
-			let rotation = parseFloat(localStorage.getItem(discName + 'RotationPrevious'));
-			discs[discNum].rotation = rotation;
-			discElement.style.transform = "rotate(" + rotation + "deg)";
-			
-			//These store the main and resetPrevious stores so that when the browser refreshes it doesn't go back to them
-			localStorage.setItem(discName + 'ResetPreviousLeft', localStorage.getItem(discName + 'LeftPrevious'));
-			localStorage.setItem(discName + 'ResetPreviousTop', localStorage.getItem(discName + 'TopPrevious'));
-			localStorage.setItem(discName + 'ResetPreviousRotation', localStorage.getItem(discName + 'RotationPrevious'));
-			localStorage.setItem(discName + 'Left', localStorage.getItem(discName + 'LeftPrevious'));
-			localStorage.setItem(discName + 'Top', localStorage.getItem(discName + 'TopPrevious'));
-			localStorage.setItem(discName + 'Rotation', localStorage.getItem(discName + 'RotationPrevious'));
-			
+	BackButton.onmousedown = function() {
+		let states = undoStack.pop();
+		if (states === undefined) {
+			return;
 		}
-
+		for (const state of states) {
+			let disc = discMap[state.name];
+			disc.setTransform(state);
+			disc.saveTransform(state);
+		}
 	}
-	
+		
   </script>
 
 </body></html>

@@ -19,6 +19,8 @@ class PersistentRingBuffer {
 		if (end === null || size === null) {
 			return;
 		}
+		end = parseInt(end);
+		size = parseInt(size);
 		
 		if (size > this.capacity) {
 			throw "PersistentRingBuffer: size " + size + "> capacity " + this.capacity;
@@ -34,7 +36,7 @@ class PersistentRingBuffer {
 	}
 	
 	push(value) {
-		localStorage.setItem(this.endItemName(), value);
+		localStorage.setItem(this.endItemName(), JSON.stringify(value));
 
 		if (++this.end >= this.capacity) {
 			this.end = 0;
@@ -58,7 +60,7 @@ class PersistentRingBuffer {
 		let name = this.endItemName();
 		let result = localStorage.getItem(name);
 		localStorage.removeItem(name);
-		return result;
+		return JSON.parse(result);
 	}
 };
 
@@ -68,8 +70,8 @@ function _ringBufferTest() {
 	buf.push(1);
 	buf.push(2);
 	buf.push(3);
-	console.assert(buf.pop() === "3");
-	console.assert(buf.pop() === "2");
+	console.assert(buf.pop() === 3);
+	console.assert(buf.pop() === 2);
 	console.assert(buf.pop() === undefined);
 	buf.push("persistent");
 }
