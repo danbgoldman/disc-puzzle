@@ -73,26 +73,27 @@
 		 loadTransform() {
 			 /* This function loads the position and rotation from localStorage */
 			
-			 if (localStorage.getItem(this.name + 'Left') === null) {
+			 let xform = localStorage.getItem(this.name + 'Xform');
+			 if (xform === null) {
 				 return;
 			 }
-			 var discLeft = parseFloat(localStorage.getItem(this.name + 'Left'));
-			 var discTop = parseFloat(localStorage.getItem(this.name + 'Top'));
-			 var discRotate = parseFloat(localStorage.getItem(this.name + 'Rotation'));
+			 xform = JSON.parse(xform)
 	
-			 this.element.style.left = discLeft + 'px';
-			 this.element.style.top = discTop +'px';
-			 this.element.style.transform = "rotate(" + discRotate + "deg)";
-			 this.rotation = discRotate;
+			 this.element.style.left = xform.left;
+			 this.element.style.top = xform.top;
+			 this.element.style.transform = "rotate(" + xform.rotate + "deg)";
+			 this.rotation = xform.rotate;
 		}
 		
 		saveTransform() {
 			/* This stores the place of where the Disc was if the player were to want 
 			to close the window and come back later. */
 			
-			localStorage.setItem(this.name + 'Left', this.element.style.left);
-			localStorage.setItem(this.name + 'Top', this.element.style.top);
-			localStorage.setItem(this.name + 'Rotation', this.rotation);
+			localStorage.setItem(this.name + 'Xform', JSON.stringify({
+				left: this.element.style.left,
+				top: this.element.style.top,
+				rotate: this.rotation
+			}));
 		}
 		
 		resetTransform() {
@@ -107,9 +108,7 @@
 			this.element.style.transform = "rotate(" + this.rotation + "deg)";
 			
 			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
-			localStorage.removeItem(this.name + 'Left');
-			localStorage.removeItem(this.name + 'Top');
-			localStorage.removeItem(this.name + 'Rotation');
+			localStorage.removeItem(this.name + 'Xform');
 		}
 	}
 	
