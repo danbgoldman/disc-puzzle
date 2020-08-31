@@ -41,21 +41,26 @@
 	"use strict";
 	// Override the default drag and drop behavior of the browser.
 	let noDragFunc = function() { return false; };
+
+	//this variable needs to be defined before most things so that the classes can work.
+	var gameComplete;
 	
 	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
 	for the default X position and same for defaultY except for the Y position.*/
-	
+
 	class Disc {
 		// This will cache a map of all discs, keyed by their name.
 		static byName = new Map();
 		
-		constructor(name, size, defaultX, defaultY) {
+		constructor(name, size, defaultX, defaultY, finalX, finalY) {
 			this.name = name;
 			this.size = size;
 			this.defaultX = defaultX; 
 			this.defaultY = defaultY;
 			this.rotation = Math.floor((Math.random() * 360) + 1);
+			this.finalX = finalX;
+			this.finalY = finalY;
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
@@ -123,26 +128,37 @@
 			// overwrite the previous saved transform
 			this.saveTransform();
 		}
+
+		completionCheck() {
+			/*checks if the discs are on the correct pegs and are on the correct rotations(technically the correct 
+			rotations are 0 sine the correct position will always be no rotation relitive to the starting png element)*/
+			if (this.element.style.left.match(/\d+/)[0] == this.finalX &&
+			    this.element.style.top.match(/\d+/)[0] == this.finalY &&
+			    ((this.element.style.transform.match(/\d+/)[0] < 10) || (this.element.style.transform.match(/\d+/)[0] > 350))) {
+				gameComplete = gameComplete + 1;
+			} else {
+				return;
+			}
+		}
 	}
 	
 	var discs = [
-		new Disc("Disc1", 174, 15, 45), 
-		new Disc("Disc2", 57, 132, 428), 
-		new Disc("Disc3", 85, 104, 310), 
-		new Disc("Disc4", 174, 15, 85), 
-		new Disc("Disc5", 70, 119, 393), 
-		new Disc("Disc6", 41, 148, 478), 
-		new Disc("Disc7", 42, 147, 457), 
-		new Disc("Disc8", 115, 74, 252), 
-		new Disc("Disc9", 174, 15, 125), 
-		new Disc("Disc10", 80, 109, 353), 
-		new Disc("Disc11", 174, 15, 165)
+		new Disc("Disc1", 174, 15, 45, 0b110000111, 0b101110), 
+		new Disc("Disc2", 57, 132, 428, 0b1011011011, 0b10010100), 
+		new Disc("Disc3", 85, 104, 310, 0b1100111100, 0b10110010), 
+		new Disc("Disc4", 174, 15, 85, 0b1111011110, 0b101111), 
+		new Disc("Disc5", 70, 119, 393, 0b1011000011, 0b100000011), 
+		new Disc("Disc6", 41, 148, 478, 0b1110111110, 0b100110101), 
+		new Disc("Disc7", 42, 147, 457, 0b1010010111, 0b101101111), 
+		new Disc("Disc8", 115, 74, 252, 0b1100001111, 0b101011011), 
+		new Disc("Disc9", 174, 15, 125, 0b110000100, 0b110000110), 
+		new Disc("Disc10", 80, 109, 353, 0b1011010011, 0b1000100100), 
+		new Disc("Disc11", 174, 15, 165, 0b1111011110, 0b110000101)
 	];
 	
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
 	let undoStack = new PersistentRingBuffer("undo", 20);  // save 20 previous actions
-
 	
 	function diskMove(event) {
 		// Every disc element has a disc object attached to it
@@ -250,9 +266,14 @@
 
 				/* Using the formula above, update the ball rotation. */
 				disc.rotation = Math.round(endAngle + angleOffset);
-
+				
 				/* Replace negative rotations with positive ones. */
 				if (disc.rotation < 0) disc.rotation += 360;
+
+				//While loop so that disc rotation doesn't exceed 360
+				while (disc.rotation > 360) {
+					disc.rotation = disc.rotation - 360;
+				}
 
 				/* Assign the CSS transform attribute */
 				disc.element.style.transform = "rotate(" + disc.rotation + "deg)";
@@ -276,6 +297,17 @@
 			undoStack.push([disc.getSavedTransform()]);
 			
 			disc.saveTransform();
+						
+			/*This function checks if all the Discs are in the correct position to end the game*/
+			gameComplete = 0;
+			discs.forEach(disc => disc.completionCheck());
+			if (gameComplete === 11) {
+				//If all the discs aren't in the right position nothing happens
+				console.log("win");
+			} else {
+				//However if all the discs are in the right place the completion function runs
+				console.log("lose");
+			}
 		};
 		
 	}
