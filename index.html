@@ -39,21 +39,17 @@
   
   <script>
 	"use strict";
-	// get the disc image element
 	// Override the default drag and drop behavior of the browser.
-	/* it's very inconvenient to find out how much an element has already been rotated, so
-	   we're going to store it in the object to make things simpler. Default rotation is zero. */
 	let noDragFunc = function() { return false; };
-	let ResetButton = document.getElementById("ResetButton");
-	let BackButton = document.getElementById("BackButton");
-
-	let undoStack = new PersistentRingBuffer("undo", 20);
 	
 	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
 	for the default X position and same for defaultY except for the Y position.*/
 	
 	class Disc {
+		// This will cache a map of all discs, keyed by their name.
+		static byName = new Map();
+		
 		constructor(name, size, defaultX, defaultY) {
 			this.name = name;
 			this.size = size;
@@ -68,16 +64,19 @@
 			this.element.style.transform = "rotate(" + this.rotation + "deg)";
 			
 			this.element.disc = this; // so we can do a reverse lookup in diskMove
+			Disc.byName.set(this.name, this); // so we can do a reverse lookup from undos
 			
 			if (!this.loadTransform()) { // load position and rotation from localStorage
 				this.saveTransform(); // or save if it wasn't in localStorage
 			}
 		}
 		
+		// Retrieve and return the last transform saved to localStorage. Not necessarily the current transform.
 		getSavedTransform() {
 			return JSON.parse(localStorage.getItem(this.name + 'Xform'));
 		}
 		
+		// Retrieve and return the current transform. Not necessarily what is saved in localStorage.
 		getTransform() {
 			return {
 				name: this.name, // we can use this to record the whole state
@@ -87,6 +86,7 @@
 			};
 		}
 		
+		// Set the current transform, without changing the transform in localStorage.
 		setTransform(xform) {
 		    this.element.style.left = xform.left;
 			this.element.style.top = xform.top;
@@ -112,18 +112,16 @@
 		}
 		
 		resetTransform() {
+			// Reset the transform to the default location and random rotation
 			this.element.style.left = this.defaultX + 'px';
 			this.element.style.top = this.defaultY + 'px';
-			
-			//Resets all rotations and deletes the storage for the discs so that
-			//when the browser refreshes it doesn't go back to before it reset.
 			
 			//sets random disk rotation
 			this.rotation = Math.floor((Math.random() * 360) + 1);
 			this.element.style.transform = "rotate(" + this.rotation + "deg)";
-			
-			/*removes storage so that when page refreshes the things you wanted to reset don't ruturn to what they were.*/
-			localStorage.removeItem(this.name + 'Xform');
+
+			// overwrite the previous saved transform
+			this.saveTransform();
 		}
 	}
 	
@@ -141,19 +139,10 @@
 		new Disc("Disc11", 174, 15, 165)
 	];
 	
-	var discMap = {
-		Disc1: discs[0],
-		Disc2: discs[1],
-		Disc3: discs[2],
-		Disc4: discs[3],
-		Disc5: discs[4],
-		Disc6: discs[5],
-		Disc7: discs[6],
-		Disc8: discs[7],
-		Disc9: discs[8],
-		Disc10: discs[9],
-		Disc11: discs[10],																		
-	}
+	let ResetButton = document.getElementById("ResetButton");
+	let BackButton = document.getElementById("BackButton");
+	let undoStack = new PersistentRingBuffer("undo", 20);  // save 20 previous actions
+
 	
 	function diskMove(event) {
 		// Every disc element has a disc object attached to it
@@ -283,7 +272,7 @@
 			document.removeEventListener('mousemove', moveHandler);
 			document.onmouseup = null;
 			
-			// push the previously saved transform onto the stack
+			// Push an array containing one entry: the previously saved transform of this disc.
 			undoStack.push([disc.getSavedTransform()]);
 			
 			disc.saveTransform();
@@ -293,7 +282,8 @@
 	
 	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. As well as the rotations.*/
 	ResetButton.onmousedown = function() {
-		// Save the previous state in the undo stack
+		
+		// Save the previous state of ALL the discs in the undo stack
 		undoStack.push(discs.map(disc => disc.getSavedTransform()));
 		
 		//Sets all discs to their default positions
@@ -302,13 +292,21 @@
 	
 	//This function undoes the user's previous action
 	BackButton.onmousedown = function() {
+		// Get the most recent element on the undo stack
 		let states = undoStack.pop();
+		
+		// Check if the stack was empty.
 		if (states === undefined) {
 			return;
 		}
+		
+		// Loop through all the states in the undo operation:
 		for (const state of states) {
-			let disc = discMap[state.name];
+			// Get the corresponding disc
+			let disc = Disc.byName.get(state.name);
+			// Update its transform
 			disc.setTransform(state);
+			// Ensure that transform is saved in localStorage
 			disc.saveTransform(state);
 		}
 	}
