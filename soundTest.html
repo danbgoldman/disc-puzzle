@@ -1,0 +1,24 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+</head>
+<body>
+	<button id="playSound">Hold mouse down to hear sound</button>
+	<audio preload="auto" id="scrape">
+		<source src="sources/530988__patchytherat__moving-stone-platform.wav" type="audio/wav">
+	</audio>
+	<audio preload="auto" id="drop">
+		<source src="sources/530987__patchytherat__stone-door-close.wav" type="audio/wav">
+	</audio>
+	
+	<script>
+		"use strict";
+		var playSound = document.getElementById("playSound");
+		var audioScrape = document.getElementById("scrape");
+		var audioDrop = document.getElementById("drop");
+		
+		audioScrape.loop = true;
+		
+		playSound.onmousedown = function() {audioScrape.play();}
+		playSound.onmouseup = function() {audioScrape.pause(); audioDrop.play();}
+	</script>
+</body>
