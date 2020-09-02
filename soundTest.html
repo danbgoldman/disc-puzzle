@@ -4,10 +4,10 @@
 <body>
 	<button id="playSound">Hold mouse down to hear sound</button>
 	<audio preload="auto" id="scrape">
-		<source src="sources/530988__patchytherat__moving-stone-platform.wav" type="audio/wav">
+		<source src="assets/scrape.mp3" type="audio/mpeg">
 	</audio>
 	<audio preload="auto" id="drop">
-		<source src="sources/530987__patchytherat__stone-door-close.wav" type="audio/wav">
+		<source src="assets/drop.mp3" type="audio/mpeg">
 	</audio>
 	
 	<script>
@@ -16,7 +16,14 @@
 		var audioScrape = document.getElementById("scrape");
 		var audioDrop = document.getElementById("drop");
 		
-		audioScrape.loop = true;
+		// audioScrape.loop = true; - this loop isn't gapless
+		audioScrape.addEventListener('timeupdate', function(){
+			var buffer = .5;
+		    if(this.currentTime > this.duration - buffer){
+					this.currentTime = 0;
+					this.play();
+		    }
+		});
 		
 		playSound.onmousedown = function() {audioScrape.play();}
 		playSound.onmouseup = function() {audioScrape.pause(); audioDrop.play();}
