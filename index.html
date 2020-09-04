@@ -128,6 +128,28 @@
 			// overwrite the previous saved transform
 			this.saveTransform();
 		}
+		
+		getScrolledBounds() {
+			// This object has the pixel positions of each edge of the disc element.
+			let rect = this.element.getBoundingClientRect();
+			let result = {
+				left:   rect.left + window.scrollX,
+			    right:  rect.right + window.scrollX,
+				top:    rect.top + window.scrollY,
+			    bottom: rect.bottom + window.scrollY,
+			}
+			return result;
+		}
+		
+		getScrolledCenter() {
+			// This retrieves the center of the disc element
+			let rect = this.getScrolledBounds();
+			let result = {
+				x: (rect.left + rect.right)/2,
+				y: (rect.top + rect.bottom)/2,
+			}
+			return result;
+		}
 
 		completionCheck() {
 			/*checks if the discs are on the correct pegs and are on the correct rotations(technically the correct 
@@ -165,13 +187,7 @@
 		let disc = event.target.disc;
 		
 		// This object has the pixel positions of each edge of the ball element.
-		let rect = disc.element.getBoundingClientRect();
-		let left = 	rect.left + window.scrollX;
-		let top = rect.top + window.scrollY;
-		let bottom = rect.bottom + window.scrollY;
-		let right = rect.right + window.scrollX;
-		console.log(left, top,bottom, right, "rect");
-		console.log(event.pageX, event.pageY, "Page X and Y");
+		let rect = disc.getScrolledBounds();
 		
 		// This object stores how we handle mouse move events. It starts empty.
 		var moveHandler;
@@ -187,8 +203,10 @@
 			to the rotation. To offset this simply find the center of the Disc
 			and subtract half of the height and width of the Disc. This sets
 			the true top left of the Disc*/
-			let DiscX = ((left + right) / 2) - disc.size;
-			let DiscY = ((top + bottom) / 2) - disc.size;
+			let center = disc.getScrolledCenter();
+			
+			let DiscX = center.x - disc.size;
+			let DiscY = center.y - disc.size;
 			
 			/* To handle dragging mode, we just keep track of where we started, relative to the
 			   top left of the element. */
@@ -201,11 +219,7 @@
 				disc.element.style.top = event.pageY - offsetY + 'px';
 				
 				/*getting the constant postition of where the disc is*/
-				let rect = disc.element.getBoundingClientRect();
-				let left = 	rect.left + window.scrollX;
-				let top = rect.top + window.scrollY;
-				let bottom = rect.bottom + window.scrollY;
-				let right = rect.right + window.scrollX;
+				let center = disc.getScrolledCenter();
 			
 				//Array is set up for each peg postition in the X and Y cordinates.
 				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
@@ -215,7 +229,7 @@
 				for (var i = 0; i < 11; i++) {
 					let pegX = pegx[i];
 					let pegY = pegy[i];
-					if (Math.abs(((left + right) / 2) - pegX) < 50 && Math.abs(((top + bottom) / 2) - pegY) < 50) {
+					if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
 						/*150 is derived from half the length and width of the disc png subtracted from half the length and width of the peg png(24).*/
 						disc.element.style.left =  pegX - (disc.size - 9) + "px";
 						disc.element.style.top = pegY - (disc.size - 9) + "px";
@@ -236,14 +250,13 @@
 			   the current vector is how much we need to rotate. So we will need to keep
 			   track of the center. */
 		
-			let centerX = (left + right) / 2;
-			let centerY = (top + bottom) / 2;
+			let center = disc.getScrolledCenter();
 			
 			/* And the other point on the line is the mouse. By subtracting the center,
 			   we can find the angle of the line. */
 
-			let startVecX = event.pageX - centerX;
-			let startVecY = event.pageY - centerY;
+			let startVecX = event.pageX - center.x;
+			let startVecY = event.pageY - center.y;
 			
 			/* CSS uses degrees, so we'll convert to those units */
 			let radiansToDegrees = 180 / Math.PI;
@@ -268,8 +281,8 @@
 			function rotateAt(event) {
 				
 				/* Find the vector from center to current mouse position. */
-				let endVecX = event.pageX - centerX;
-				let endVecY = event.pageY - centerY;
+				let endVecX = event.pageX - center.x;
+				let endVecY = event.pageY - center.y;
 
 				/* Compute the angle of that vector in degrees: */
 				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
