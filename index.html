@@ -39,6 +39,9 @@
   
   <script>
 	"use strict";
+	/* CSS uses degrees, so we'll convert to those units */
+	const RADIANS_TO_DEGREES = 180 / Math.PI;
+	
 	// Override the default drag and drop behavior of the browser.
 	let noDragFunc = function() { return false; };
 
@@ -142,7 +145,7 @@
 		}
 		
 		getScrolledCenter() {
-			// This retrieves the center of the disc element
+			// This retrieves the center of the disc element, regardless of rotation.
 			let rect = this.getScrolledBounds();
 			let result = {
 				x: (rect.left + rect.right)/2,
@@ -186,37 +189,27 @@
 		// Every disc element has a disc object attached to it
 		let disc = event.target.disc;
 		
-		// This object has the pixel positions of each edge of the ball element.
-		let rect = disc.getScrolledBounds();
-		
 		// This object stores how we handle mouse move events. It starts empty.
 		var moveHandler;
+		
+		let center = disc.getScrolledCenter();
+
+		/* To handle dragging, we just keep track of where we started, relative to the
+		   center of the disc. */
+		
+		let startVecX = event.pageX - center.x;
+		let startVecY = event.pageY - center.y;
 		
 		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
 		   to switch to rotation mode for now, but it could be done using a tool mode or some
 		   other way. */
 		
 		if (!event.shiftKey) {
-		
-			/*The Disc may already have some rotation to it. If that is so
-			the "top left corner" isn't necissarily the top left corner due
-			to the rotation. To offset this simply find the center of the Disc
-			and subtract half of the height and width of the Disc. This sets
-			the true top left of the Disc*/
-			let center = disc.getScrolledCenter();
-			
-			let DiscX = center.x - disc.size;
-			let DiscY = center.y - disc.size;
-			
-			/* To handle dragging mode, we just keep track of where we started, relative to the
-			   top left of the element. */
-			let offsetX = event.pageX - DiscX;
-			let offsetY = event.pageY - DiscY;
 
 			function moveAt(event) {
 				/* As we move the mouse, keep that offset constant with the current position. */
-				disc.element.style.left = event.pageX - offsetX + 'px';
-				disc.element.style.top = event.pageY - offsetY + 'px';
+				disc.element.style.left = event.pageX - startVecX - disc.size + 'px';
+				disc.element.style.top = event.pageY - startVecY - disc.size + 'px';
 				
 				/*getting the constant postition of where the disc is*/
 				let center = disc.getScrolledCenter();
@@ -230,16 +223,14 @@
 					let pegX = pegx[i];
 					let pegY = pegy[i];
 					if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
-						/*150 is derived from half the length and width of the disc png subtracted from half the length and width of the peg png(24).*/
+						/* account for both the disc radius and the peg radius */
 						disc.element.style.left =  pegX - (disc.size - 9) + "px";
 						disc.element.style.top = pegY - (disc.size - 9) + "px";
-						
 					} 
 					
 				}
 				
 			}
-
 
 			moveHandler = moveAt;
 			
@@ -248,21 +239,11 @@
 			   imaginary vector from the center of the object to the mouse position.
 			   As we move the mouse around, the angle between the original vector and
 			   the current vector is how much we need to rotate. So we will need to keep
-			   track of the center. */
-		
-			let center = disc.getScrolledCenter();
-			
-			/* And the other point on the line is the mouse. By subtracting the center,
-			   we can find the angle of the line. */
+			   track of the center. The other point on the line is the mouse. By
+			   subtracting the center, we can find the angle of the line. */
 
-			let startVecX = event.pageX - center.x;
-			let startVecY = event.pageY - center.y;
-			
-			/* CSS uses degrees, so we'll convert to those units */
-			let radiansToDegrees = 180 / Math.PI;
-			
 			/* We can get the starting angle using the arctangent: */
-			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
+			let startAngle = Math.atan2(startVecY, startVecX) * RADIANS_TO_DEGREES;
 			
 			/* One final complication: Sometimes the object already has some rotation! In that
 			   case we would compute the final rotation as
@@ -285,7 +266,7 @@
 				let endVecY = event.pageY - center.y;
 
 				/* Compute the angle of that vector in degrees: */
-				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
+				let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
 
 				/* Using the formula above, update the ball rotation. */
 				disc.rotation = Math.round(endAngle + angleOffset);
