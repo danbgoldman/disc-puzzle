@@ -153,6 +153,11 @@
 			}
 			return result;
 		}
+		
+		setScrolledCenter(x, y) {
+			this.element.style.left = x - this.size + 'px';
+			this.element.style.top = y - this.size + 'px';
+		}
 
 		completionCheck() {
 			/*checks if the discs are on the correct pegs and are on the correct rotations(technically the correct 
@@ -208,12 +213,11 @@
 
 			function moveAt(event) {
 				/* As we move the mouse, keep that offset constant with the current position. */
-				disc.element.style.left = event.pageX - startVecX - disc.size + 'px';
-				disc.element.style.top = event.pageY - startVecY - disc.size + 'px';
+				let center = {
+					x: event.pageX - startVecX,
+					y: event.pageY - startVecY,
+				}
 				
-				/*getting the constant postition of where the disc is*/
-				let center = disc.getScrolledCenter();
-			
 				//Array is set up for each peg postition in the X and Y cordinates.
 				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
 				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
@@ -223,12 +227,14 @@
 					let pegX = pegx[i];
 					let pegY = pegy[i];
 					if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
-						/* account for both the disc radius and the peg radius */
-						disc.element.style.left =  pegX - (disc.size - 9) + "px";
-						disc.element.style.top = pegY - (disc.size - 9) + "px";
+						/* account for the peg radius */
+						center.x =  pegX + 9;
+						center.y = pegY + 9;
 					} 
 					
 				}
+
+				disc.setScrolledCenter(center.x, center.y);
 				
 			}
 
