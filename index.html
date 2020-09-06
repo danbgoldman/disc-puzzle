@@ -61,21 +61,19 @@
 			this.size = size;
 			this.defaultX = defaultX; 
 			this.defaultY = defaultY;
-			this.rotation = Math.floor((Math.random() * 360) + 1);
 			this.finalX = finalX;
 			this.finalY = finalY;
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
 			this.element.onmousedown = diskMove;
-			/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted */
-			this.element.style.transform = "rotate(" + this.rotation + "deg)";
 			
-			this.element.disc = this; // so we can do a reverse lookup in diskMove
-			Disc.byName.set(this.name, this); // so we can do a reverse lookup from undos
+			this.element.disc = this; // enable a reverse lookup in diskMove
+			Disc.byName.set(this.name, this); // enable a reverse lookup from undos
 			
 			if (!this.loadTransform()) { // load position and rotation from localStorage
-				this.saveTransform(); // or save if it wasn't in localStorage
+				this.resetTransform(); // or reset and save it if it wasn't in localStorage
+				this.saveTransform();
 			}
 		}
 		
@@ -98,7 +96,6 @@
 		setTransform(xform) {
 		    this.element.style.left = xform.left;
 			this.element.style.top = xform.top;
-			this.element.style.transform = "rotate(" + xform.rotate + "deg)";
 			this.rotation = xform.rotate;			
 		}
 		
@@ -125,8 +122,7 @@
 			this.element.style.top = this.defaultY + 'px';
 			
 			//sets random disk rotation
-			this.rotation = Math.floor((Math.random() * 360) + 1);
-			this.element.style.transform = "rotate(" + this.rotation + "deg)";
+			this.rotation = Math.random() * 360;
 
 			// overwrite the previous saved transform
 			this.saveTransform();
@@ -157,6 +153,26 @@
 		setScrolledCenter(x, y) {
 			this.element.style.left = x - this.size + 'px';
 			this.element.style.top = y - this.size + 'px';
+		}
+		
+		get rotation() {
+			return this._rotation;
+		}
+		
+		set rotation(rot) {
+			rot = Math.round(rot);
+			
+			/* Replace negative rotations with positive ones. */
+			if (rot < 0) rot += 360;
+
+			//While loop so that disc rotation doesn't exceed 360
+			while (rot > 360) {
+				rot = rot - 360;
+			}
+
+			this._rotation = rot;
+			/* Assign the CSS transform attribute */
+			this.element.style.transform = "rotate(" + rot + "deg)";
 		}
 
 		completionCheck() {
@@ -275,18 +291,7 @@
 				let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
 
 				/* Using the formula above, update the ball rotation. */
-				disc.rotation = Math.round(endAngle + angleOffset);
-				
-				/* Replace negative rotations with positive ones. */
-				if (disc.rotation < 0) disc.rotation += 360;
-
-				//While loop so that disc rotation doesn't exceed 360
-				while (disc.rotation > 360) {
-					disc.rotation = disc.rotation - 360;
-				}
-
-				/* Assign the CSS transform attribute */
-				disc.element.style.transform = "rotate(" + disc.rotation + "deg)";
+				disc.rotation = endAngle + angleOffset;
 			}
 
 			moveHandler = rotateAt;
