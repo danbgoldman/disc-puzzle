@@ -220,82 +220,77 @@
 		
 		let startVecX = event.pageX - center.x;
 		let startVecY = event.pageY - center.y;
+
+		/* To handle rotation mode, we consider startVec as an
+		   imaginary vector from the center of the object to the mouse position.
+		   As we move the mouse around, the angle between the original vector and
+		   the current vector is how much we need to rotate. We can get the starting
+		   angle using the arctangent: */
 		
+		let startAngle = Math.atan2(startVecY, startVecX) * RADIANS_TO_DEGREES;
+		
+		/* Sometimes the object already has some rotation! In that
+		   case we would compute the final rotation as
+		
+		   finalRotation = startRotation + (endAngle - startAngle)
+		
+		   But only the endAngle is actually changing, so we can rewrite this as:
+		
+		   angleOffset = startRotation - startAngle;
+		   finalRotation = angleOffset + endAngle;
+		
+		   angleOffset only needs to be computed once: */
+
+		let angleOffset = disc.rotation - startAngle;
+
 		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
 		   to switch to rotation mode for now, but it could be done using a tool mode or some
 		   other way. */
+	
+		function moveAt(event) {
+			/* As we move the mouse, keep that offset constant with the current position. */
+			let center = {
+				x: event.pageX - startVecX,
+				y: event.pageY - startVecY,
+			}
+			
+			//Array is set up for each peg postition in the X and Y cordinates.
+			var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
+			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
 		
+			/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
+			for (var i = 0; i < 11; i++) {
+				let pegX = pegx[i];
+				let pegY = pegy[i];
+				if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
+					/* account for the peg radius */
+					center.x =  pegX + 9;
+					center.y = pegY + 9;
+				} 
+				
+			}
+
+			disc.setScrolledCenter(center.x, center.y);
+			
+		}
+	
+		function rotateAt(event) {
+			
+			/* Find the vector from center to current mouse position. */
+			let endVecX = event.pageX - center.x;
+			let endVecY = event.pageY - center.y;
+
+			/* Compute the angle of that vector in degrees: */
+			let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
+
+			/* Using the formula above, update the ball rotation. */
+			disc.rotation = endAngle + angleOffset;
+		}
+	
 		if (!event.shiftKey) {
-
-			function moveAt(event) {
-				/* As we move the mouse, keep that offset constant with the current position. */
-				let center = {
-					x: event.pageX - startVecX,
-					y: event.pageY - startVecY,
-				}
-				
-				//Array is set up for each peg postition in the X and Y cordinates.
-				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
-				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
-			
-				/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
-				for (var i = 0; i < 11; i++) {
-					let pegX = pegx[i];
-					let pegY = pegy[i];
-					if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
-						/* account for the peg radius */
-						center.x =  pegX + 9;
-						center.y = pegY + 9;
-					} 
-					
-				}
-
-				disc.setScrolledCenter(center.x, center.y);
-				
-			}
-
-			moveHandler = moveAt;
-			
+			moveHandler = moveAt;	
 		} else {
-			/* Now we have to handle rotation mode. In this mode we care about an
-			   imaginary vector from the center of the object to the mouse position.
-			   As we move the mouse around, the angle between the original vector and
-			   the current vector is how much we need to rotate. So we will need to keep
-			   track of the center. The other point on the line is the mouse. By
-			   subtracting the center, we can find the angle of the line. */
-
-			/* We can get the starting angle using the arctangent: */
-			let startAngle = Math.atan2(startVecY, startVecX) * RADIANS_TO_DEGREES;
-			
-			/* One final complication: Sometimes the object already has some rotation! In that
-			   case we would compute the final rotation as
-			
-			   finalRotation = startRotation + (endAngle - startAngle)
-			
-			   But only the endAngle is actually changing, so we can rewrite this as:
-			
-			   angleOffset = startRotation - startAngle;
-			   finalRotation = angleOffset + endAngle;
-			
-			   angleOffset only needs to be computed once: */
-
-			let angleOffset = disc.rotation - startAngle;
-
-			function rotateAt(event) {
-				
-				/* Find the vector from center to current mouse position. */
-				let endVecX = event.pageX - center.x;
-				let endVecY = event.pageY - center.y;
-
-				/* Compute the angle of that vector in degrees: */
-				let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
-
-				/* Using the formula above, update the ball rotation. */
-				disc.rotation = endAngle + angleOffset;
-			}
-
 			moveHandler = rotateAt;
-			
 		}
 		
 		/* Assign the appropriate handler. Note that an object covering the whole window
@@ -354,7 +349,7 @@
 			// Update its transform
 			disc.setTransform(state);
 			// Ensure that transform is saved in localStorage
-			disc.saveTransform(state);
+			disc.saveTransform();
 		}
 	}
 		
