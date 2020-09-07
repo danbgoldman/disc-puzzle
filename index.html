@@ -236,7 +236,8 @@
 			   - in this case the document itself - has to be the target, since we
 			   might move the pointer off the object. */
 			document.addEventListener('mousemove', this.move);
-		
+			
+			// Make sure we clean up when the mouse lifts up.
 			document.onmouseup = this.endMove;
 		}
 		
@@ -273,6 +274,7 @@
 			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
 		
 			/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
+			let snapped = false; // keeps track of whether we snapped or not
 			for (var i = 0; i < 11; i++) {
 				let pegX = pegx[i];
 				let pegY = pegy[i];
@@ -280,10 +282,18 @@
 					/* account for the peg radius */
 					center.x =  pegX + 9;
 					center.y = pegY + 9;
+					snapped = true;
 				} 
 				
 			}
-
+			
+			if (snapped) {
+				soundManager.stop(); // make the plunk sound!
+			} else {
+				soundManager.start(); // keep scraping
+			}
+			
+			/* Finally, set the disc to that location */
 			this.disc.setScrolledCenter(center.x, center.y);
 			
 		}
@@ -296,8 +306,14 @@
 			/* Compute the angle of that vector in degrees: */
 			let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
 
+			let lastRotation = this.disc.rotation;
+
 			/* Using the formula above, update the ball rotation. */
 			this.disc.rotation = endAngle + this.angleOffset;
+			
+			if (this.disc.rotation != lastRotation) {
+				soundManager.start(); // only scraping
+			}
 		}
 	
 		move(event) {
@@ -309,7 +325,57 @@
 		}
 	}
 	
+	class SoundManager {
+		constructor() {
+			this.scrapeSound = new Audio("assets/scrape.mp3");
+			this.scrapeSound.loop = true;
+			this.dropSound = new Audio("assets/drop.mp3");
+			
+			let sm = this;
+			this.scrapeSound.addEventListener('timeupdate', function(){
+				// If we haven't been started in a while, pause.
+				if (Date.now() - sm.lastStart > 100) {
+					this.pause();
+					sm.playing = false;
+					return;
+				}
+				// If we're near the end of the sound, repeat it.
+				let buffer = .5;
+			    if(this.currentTime > this.duration - buffer){
+				  this.currentTime = 0;
+				  this.play();
+			    }
+			});
+			
+			this.playing = false;
+		}
+		
+		start() {
+			// Keep track of when we last requested a start
+			this.lastStart = Date.now();
+			
+			// Can only be started when stopped.
+			if (this.playing) {
+				return;
+			}
+			
+			this.scrapeSound.play();
+			this.playing = true;
+		}
+		
+		stop() {
+			// Can only be stopped when started.
+			if (!this.playing) {
+				return;
+			}
+			this.scrapeSound.pause();
+			this.dropSound.play();
+			this.playing = false;
+		}
+	}
+	
 	var discMover = new DiscMover(); // a singleton
+	var soundManager = new SoundManager();
 	
 	var discs = [
 		new Disc("Disc1", 174, 15, 45, 0b110000111, 0b101110), 
