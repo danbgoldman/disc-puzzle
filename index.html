@@ -39,6 +39,9 @@
   
   <script>
 	"use strict";
+	/* CSS uses degrees, so we'll convert to those units */
+	const RADIANS_TO_DEGREES = 180 / Math.PI;
+	
 	// Override the default drag and drop behavior of the browser.
 	let noDragFunc = function() { return false; };
 
@@ -58,21 +61,19 @@
 			this.size = size;
 			this.defaultX = defaultX; 
 			this.defaultY = defaultY;
-			this.rotation = Math.floor((Math.random() * 360) + 1);
 			this.finalX = finalX;
 			this.finalY = finalY;
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
-			this.element.onmousedown = diskMove;
-			/*This is used to make sure none of the roatations are a number and random so that the roation number can be extracted */
-			this.element.style.transform = "rotate(" + this.rotation + "deg)";
+			this.element.onmousedown = discMover.startMove;
 			
-			this.element.disc = this; // so we can do a reverse lookup in diskMove
-			Disc.byName.set(this.name, this); // so we can do a reverse lookup from undos
+			this.element.disc = this; // enable a reverse lookup in diskMove
+			Disc.byName.set(this.name, this); // enable a reverse lookup from undos
 			
 			if (!this.loadTransform()) { // load position and rotation from localStorage
-				this.saveTransform(); // or save if it wasn't in localStorage
+				this.resetTransform(); // or reset and save it if it wasn't in localStorage
+				this.saveTransform();
 			}
 		}
 		
@@ -95,7 +96,6 @@
 		setTransform(xform) {
 		    this.element.style.left = xform.left;
 			this.element.style.top = xform.top;
-			this.element.style.transform = "rotate(" + xform.rotate + "deg)";
 			this.rotation = xform.rotate;			
 		}
 		
@@ -122,11 +122,57 @@
 			this.element.style.top = this.defaultY + 'px';
 			
 			//sets random disk rotation
-			this.rotation = Math.floor((Math.random() * 360) + 1);
-			this.element.style.transform = "rotate(" + this.rotation + "deg)";
+			this.rotation = Math.random() * 360;
 
 			// overwrite the previous saved transform
 			this.saveTransform();
+		}
+		
+		getScrolledBounds() {
+			// This object has the pixel positions of each edge of the disc element.
+			let rect = this.element.getBoundingClientRect();
+			let result = {
+				left:   rect.left + window.scrollX,
+			    right:  rect.right + window.scrollX,
+				top:    rect.top + window.scrollY,
+			    bottom: rect.bottom + window.scrollY,
+			}
+			return result;
+		}
+		
+		getScrolledCenter() {
+			// This retrieves the center of the disc element, regardless of rotation.
+			let rect = this.getScrolledBounds();
+			let result = {
+				x: (rect.left + rect.right)/2,
+				y: (rect.top + rect.bottom)/2,
+			}
+			return result;
+		}
+		
+		setScrolledCenter(x, y) {
+			this.element.style.left = x - this.size + 'px';
+			this.element.style.top = y - this.size + 'px';
+		}
+		
+		get rotation() {
+			return this._rotation;
+		}
+		
+		set rotation(rot) {
+			rot = Math.round(rot);
+			
+			/* Replace negative rotations with positive ones. */
+			if (rot < 0) rot += 360;
+
+			//While loop so that disc rotation doesn't exceed 360
+			while (rot > 360) {
+				rot = rot - 360;
+			}
+
+			this._rotation = rot;
+			/* Assign the CSS transform attribute */
+			this.element.style.transform = "rotate(" + rot + "deg)";
 		}
 
 		completionCheck() {
@@ -141,6 +187,129 @@
 			}
 		}
 	}
+	
+	class DiscMover {
+		constructor() {
+			this.startMove = this.startMove.bind(this);
+			this.endMove = this.endMove.bind(this);			
+			this.move = this.move.bind(this);
+ 		}
+		
+		startMove(event) {
+			// Every disc element has a disc object attached to it
+			this.disc = event.target.disc;
+
+			// Cache the center of this disc;
+			this.center = this.disc.getScrolledCenter();
+
+			/* To handle dragging, we just keep track of where we started, relative to the
+			   center of the disc. */
+		
+			this.startVecX = event.pageX - this.center.x;
+			this.startVecY = event.pageY - this.center.y;
+
+			/* To handle rotation mode, we consider startVec as an
+			   imaginary vector from the center of the object to the mouse position.
+			   As we move the mouse around, the angle between the original vector and
+			   the current vector is how much we need to rotate. We can get the starting
+			   angle using the arctangent: */
+		
+			let startAngle = Math.atan2(this.startVecY, this.startVecX) * RADIANS_TO_DEGREES;
+		
+			/* Sometimes the object already has some rotation! In that
+			   case we would compute the final rotation as
+	
+			   finalRotation = startRotation + (endAngle - startAngle)
+	
+			   But only the endAngle is actually changing, so we can rewrite this as:
+	
+			   angleOffset = startRotation - startAngle;
+			   finalRotation = angleOffset + endAngle;
+	
+			   angleOffset only needs to be computed once: */
+
+			this.angleOffset = this.disc.rotation - startAngle;
+			
+			this.rotateMode = event.shiftKey;
+			
+			/* Assign the appropriate handler. Note that an object covering the whole window
+			   - in this case the document itself - has to be the target, since we
+			   might move the pointer off the object. */
+			document.addEventListener('mousemove', this.move);
+		
+			document.onmouseup = this.endMove;
+		}
+		
+		endMove(event) {
+			// When the move is over, remove the event listeners.
+			document.removeEventListener('mousemove', this.move);
+			document.onmouseup = null;
+		
+			// Push an array containing one entry: the previously saved transform of this disc.
+			undoStack.push([this.disc.getSavedTransform()]);
+			this.disc.saveTransform();
+					
+			/*This function checks if all the Discs are in the correct position to end the game*/
+			gameComplete = 0;
+			discs.forEach(disc => disc.completionCheck());
+			if (gameComplete === 11) {
+				//If all the discs aren't in the right position nothing happens
+				console.log("win");
+			} else {
+				//However if all the discs are in the right place the completion function runs
+				console.log("lose");
+			};
+		}
+
+		translate(event) {
+			/* As we move the mouse, keep that offset constant with the current position. */
+			let center = {
+				x: event.pageX - this.startVecX,
+				y: event.pageY - this.startVecY,
+			}
+			
+			//Array is set up for each peg postition in the X and Y cordinates.
+			var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
+			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
+		
+			/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
+			for (var i = 0; i < 11; i++) {
+				let pegX = pegx[i];
+				let pegY = pegy[i];
+				if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
+					/* account for the peg radius */
+					center.x =  pegX + 9;
+					center.y = pegY + 9;
+				} 
+				
+			}
+
+			this.disc.setScrolledCenter(center.x, center.y);
+			
+		}
+	
+		rotate(event) {
+			/* Find the vector from center to current mouse position. */
+			let endVecX = event.pageX - this.center.x;
+			let endVecY = event.pageY - this.center.y;
+
+			/* Compute the angle of that vector in degrees: */
+			let endAngle = Math.atan2(endVecY, endVecX) * RADIANS_TO_DEGREES;
+
+			/* Using the formula above, update the ball rotation. */
+			this.disc.rotation = endAngle + this.angleOffset;
+		}
+	
+		move(event) {
+			if (this.rotateMode) {
+				this.rotate(event);
+			} else {
+				this.translate(event);
+			}
+		}
+	}
+	
+	var discMover = new DiscMover(); // a singleton
 	
 	var discs = [
 		new Disc("Disc1", 174, 15, 45, 0b110000111, 0b101110), 
@@ -159,168 +328,6 @@
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
 	let undoStack = new PersistentRingBuffer("undo", 20);  // save 20 previous actions
-	
-	function diskMove(event) {
-		// Every disc element has a disc object attached to it
-		let disc = event.target.disc;
-		
-		// This object has the pixel positions of each edge of the ball element.
-		let rect = disc.element.getBoundingClientRect();
-		let left = 	rect.left + window.scrollX;
-		let top = rect.top + window.scrollY;
-		let bottom = rect.bottom + window.scrollY;
-		let right = rect.right + window.scrollX;
-		console.log(left, top,bottom, right, "rect");
-		console.log(event.pageX, event.pageY, "Page X and Y");
-		
-		// This object stores how we handle mouse move events. It starts empty.
-		var moveHandler;
-		
-		/* What comes next depends if we're doing rotation or dragging. We'll use the shift key
-		   to switch to rotation mode for now, but it could be done using a tool mode or some
-		   other way. */
-		
-		if (!event.shiftKey) {
-		
-			/*The Disc may already have some rotation to it. If that is so
-			the "top left corner" isn't necissarily the top left corner due
-			to the rotation. To offset this simply find the center of the Disc
-			and subtract half of the height and width of the Disc. This sets
-			the true top left of the Disc*/
-			let DiscX = ((left + right) / 2) - disc.size;
-			let DiscY = ((top + bottom) / 2) - disc.size;
-			
-			/* To handle dragging mode, we just keep track of where we started, relative to the
-			   top left of the element. */
-			let offsetX = event.pageX - DiscX;
-			let offsetY = event.pageY - DiscY;
-
-			function moveAt(event) {
-				/* As we move the mouse, keep that offset constant with the current position. */
-				disc.element.style.left = event.pageX - offsetX + 'px';
-				disc.element.style.top = event.pageY - offsetY + 'px';
-				
-				/*getting the constant postition of where the disc is*/
-				let rect = disc.element.getBoundingClientRect();
-				let left = 	rect.left + window.scrollX;
-				let top = rect.top + window.scrollY;
-				let bottom = rect.bottom + window.scrollY;
-				let right = rect.right + window.scrollX;
-			
-				//Array is set up for each peg postition in the X and Y cordinates.
-				var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
-				var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
-			
-				/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
-				for (var i = 0; i < 11; i++) {
-					let pegX = pegx[i];
-					let pegY = pegy[i];
-					if (Math.abs(((left + right) / 2) - pegX) < 50 && Math.abs(((top + bottom) / 2) - pegY) < 50) {
-						/*150 is derived from half the length and width of the disc png subtracted from half the length and width of the peg png(24).*/
-						disc.element.style.left =  pegX - (disc.size - 9) + "px";
-						disc.element.style.top = pegY - (disc.size - 9) + "px";
-						
-					} 
-					
-				}
-				
-			}
-
-
-			moveHandler = moveAt;
-			
-		} else {
-			/* Now we have to handle rotation mode. In this mode we care about an
-			   imaginary vector from the center of the object to the mouse position.
-			   As we move the mouse around, the angle between the original vector and
-			   the current vector is how much we need to rotate. So we will need to keep
-			   track of the center. */
-		
-			let centerX = (left + right) / 2;
-			let centerY = (top + bottom) / 2;
-			
-			/* And the other point on the line is the mouse. By subtracting the center,
-			   we can find the angle of the line. */
-
-			let startVecX = event.pageX - centerX;
-			let startVecY = event.pageY - centerY;
-			
-			/* CSS uses degrees, so we'll convert to those units */
-			let radiansToDegrees = 180 / Math.PI;
-			
-			/* We can get the starting angle using the arctangent: */
-			let startAngle = Math.atan2(startVecY, startVecX) * radiansToDegrees;
-			
-			/* One final complication: Sometimes the object already has some rotation! In that
-			   case we would compute the final rotation as
-			
-			   finalRotation = startRotation + (endAngle - startAngle)
-			
-			   But only the endAngle is actually changing, so we can rewrite this as:
-			
-			   angleOffset = startRotation - startAngle;
-			   finalRotation = angleOffset + endAngle;
-			
-			   angleOffset only needs to be computed once: */
-
-			let angleOffset = disc.rotation - startAngle;
-
-			function rotateAt(event) {
-				
-				/* Find the vector from center to current mouse position. */
-				let endVecX = event.pageX - centerX;
-				let endVecY = event.pageY - centerY;
-
-				/* Compute the angle of that vector in degrees: */
-				let endAngle = Math.atan2(endVecY, endVecX) * radiansToDegrees;
-
-				/* Using the formula above, update the ball rotation. */
-				disc.rotation = Math.round(endAngle + angleOffset);
-				
-				/* Replace negative rotations with positive ones. */
-				if (disc.rotation < 0) disc.rotation += 360;
-
-				//While loop so that disc rotation doesn't exceed 360
-				while (disc.rotation > 360) {
-					disc.rotation = disc.rotation - 360;
-				}
-
-				/* Assign the CSS transform attribute */
-				disc.element.style.transform = "rotate(" + disc.rotation + "deg)";
-			}
-
-			moveHandler = rotateAt;
-			
-		}
-		
-		/* Assign the appropriate handler. Note that an object covering the whole window
-		   - in this case the document itself - has to be the target, since we
-		   might move the pointer off the object. */
-		document.addEventListener('mousemove', moveHandler);
-		
-		// When the move is over, remove the event listeners.
-		document.onmouseup = function() {
-			document.removeEventListener('mousemove', moveHandler);
-			document.onmouseup = null;
-			
-			// Push an array containing one entry: the previously saved transform of this disc.
-			undoStack.push([disc.getSavedTransform()]);
-			
-			disc.saveTransform();
-						
-			/*This function checks if all the Discs are in the correct position to end the game*/
-			gameComplete = 0;
-			discs.forEach(disc => disc.completionCheck());
-			if (gameComplete === 11) {
-				//If all the discs aren't in the right position nothing happens
-				console.log("win");
-			} else {
-				//However if all the discs are in the right place the completion function runs
-				console.log("lose");
-			}
-		};
-		
-	}
 	
 	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. As well as the rotations.*/
 	ResetButton.onmousedown = function() {
@@ -349,7 +356,7 @@
 			// Update its transform
 			disc.setTransform(state);
 			// Ensure that transform is saved in localStorage
-			disc.saveTransform(state);
+			disc.saveTransform();
 		}
 	}
 		
