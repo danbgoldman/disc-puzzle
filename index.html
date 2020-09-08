@@ -369,6 +369,7 @@
 				return;
 			}
 			this.scrapeSound.pause();
+			this.dropSound.currentTime = 0.23; // queues up the thunk for less delay.
 			this.dropSound.play();
 			this.playing = false;
 		}
