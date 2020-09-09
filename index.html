@@ -63,7 +63,6 @@
 			this.defaultY = defaultY;
 			this.finalX = finalX;
 			this.finalY = finalY;
-			this.onPeg = false; // TODO onPeg needs to be saved with the state
 
 			this.element = document.getElementById(name);
 			this.element.ondragstart = noDragFunc;
@@ -72,61 +71,65 @@
 			this.element.disc = this; // enable a reverse lookup in diskMove
 			Disc.byName.set(this.name, this); // enable a reverse lookup from undos
 			
-			if (!this.loadTransform()) { // load position and rotation from localStorage
-				this.resetTransform(); // or reset and save it if it wasn't in localStorage
-				this.saveTransform();
+			if (!this.loadState()) { // load position and rotation from localStorage
+				this.resetState(); // or reset and save it if it wasn't in localStorage
+				this.saveState();
 			}
 		}
 		
 		// Retrieve and return the last transform saved to localStorage. Not necessarily the current transform.
-		getSavedTransform() {
+		getSavedState() {
 			return JSON.parse(localStorage.getItem(this.name + 'Xform'));
 		}
 		
-		// Retrieve and return the current transform. Not necessarily what is saved in localStorage.
-		getTransform() {
+		// Retrieve and return the current state. Not necessarily what is saved in localStorage.
+		getState() {
 			return {
 				name: this.name, // we can use this to record the whole state
 				left: this.element.style.left,
 				top: this.element.style.top,
-				rotate: this.rotation
+				rotate: this.rotation,
+				onPeg: this.onPeg,
 			};
 		}
 		
 		// Set the current transform, without changing the transform in localStorage.
-		setTransform(xform) {
-		    this.element.style.left = xform.left;
-			this.element.style.top = xform.top;
-			this.rotation = xform.rotate;			
+		setState(state) {
+		    this.element.style.left = state.left;
+			this.element.style.top = state.top;
+			this.rotation = state.rotate;
+			this.onPeg = state.onPeg;			
 		}
 		
-		loadTransform() {
+		loadState() {
 			/* This function loads the position and rotation from localStorage */
-			let xform = this.getSavedTransform();
-			if (xform == null) {
+			let state = this.getSavedState();
+			if (state == null) {
 				return false;
 			}
-		    this.setTransform(xform);
+		    this.setState(state);
 			return true;
 		}
 		
-		saveTransform() {
+		saveState() {
 			/* This stores the place of where the Disc was if the player were to want 
 			to close the window and come back later. */
 			
-			localStorage.setItem(this.name + 'Xform', JSON.stringify(this.getTransform()));
+			localStorage.setItem(this.name + 'Xform', JSON.stringify(this.getState()));
 		}
 		
-		resetTransform() {
+		resetState() {
 			// Reset the transform to the default location and random rotation
 			this.element.style.left = this.defaultX + 'px';
 			this.element.style.top = this.defaultY + 'px';
 			
 			//sets random disk rotation
 			this.rotation = Math.random() * 360;
+			
+			this.onPeg = false;
 
 			// overwrite the previous saved transform
-			this.saveTransform();
+			this.saveState();
 		}
 		
 		getScrolledBounds() {
@@ -251,8 +254,8 @@
 			document.onmouseup = null;
 		
 			// Push an array containing one entry: the previously saved transform of this disc.
-			undoStack.push([this.disc.getSavedTransform()]);
-			this.disc.saveTransform();
+			undoStack.push([this.disc.getSavedState()]);
+			this.disc.saveState();
 			
 			// Don't set this until the move is completed
 			this.disc.onPeg = this.snapped;
@@ -420,10 +423,10 @@
 	ResetButton.onmousedown = function() {
 		
 		// Save the previous state of ALL the discs in the undo stack
-		undoStack.push(discs.map(disc => disc.getSavedTransform()));
+		undoStack.push(discs.map(disc => disc.getSavedState()));
 		
 		//Sets all discs to their default positions
-		discs.forEach(disc => disc.resetTransform());
+		discs.forEach(disc => disc.resetState());
 	}
 	
 	//This function undoes the user's previous action
@@ -441,9 +444,9 @@
 			// Get the corresponding disc
 			let disc = Disc.byName.get(state.name);
 			// Update its transform
-			disc.setTransform(state);
+			disc.setState(state);
 			// Ensure that transform is saved in localStorage
-			disc.saveTransform();
+			disc.saveState();
 		}
 	}
 		
