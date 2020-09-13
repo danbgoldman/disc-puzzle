@@ -45,9 +45,6 @@
 	// Override the default drag and drop behavior of the browser.
 	let noDragFunc = function() { return false; };
 
-	//this variable needs to be defined before most things so that the classes can work.
-	var gameComplete;
-	
 	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
 	for the default X position and same for defaultY except for the Y position.*/
@@ -179,15 +176,15 @@
 			this.element.style.transform = "rotate(" + rot + "deg)";
 		}
 
-		completionCheck() {
+		isCorrect() {
 			/*checks if the discs are on the correct pegs and are on the correct rotations(technically the correct 
 			rotations are 0 sine the correct position will always be no rotation relitive to the starting png element)*/
 			if (this.element.style.left.match(/\d+/)[0] == this.finalX &&
 			    this.element.style.top.match(/\d+/)[0] == this.finalY &&
 			    ((this.element.style.transform.match(/\d+/)[0] < 10) || (this.element.style.transform.match(/\d+/)[0] > 350))) {
-				gameComplete = gameComplete + 1;
+				return true;
 			} else {
-				return;
+				return false;
 			}
 		}
 	}
@@ -261,9 +258,9 @@
 			this.disc.onPeg = this.snapped;
 					
 			/*This function checks if all the Discs are in the correct position to end the game*/
-			gameComplete = 0;
-			discs.forEach(disc => disc.completionCheck());
-			if (gameComplete === 11) {
+			let discsCorrect = discs.map(disc => disc.isCorrect())
+			 						.reduce( (accumulator, currentValue) => accumulator + currentValue, 0);
+			if (discsCorrect === 11) {
 				//If all the discs aren't in the right position nothing happens
 				console.log("win");
 			} else {
