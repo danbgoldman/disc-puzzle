@@ -9,7 +9,7 @@
 
 <body style="height: 200px">
 
-  <p>Drag the Disks to the pegs. Press Shift to rotate the disks. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
+  <p>Drag the Disks to the pegs. Once a disk is on a peg, drag to rotate. Drag away to move pegs again. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
   
   
   <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
@@ -71,61 +71,65 @@
 			this.element.disc = this; // enable a reverse lookup in diskMove
 			Disc.byName.set(this.name, this); // enable a reverse lookup from undos
 			
-			if (!this.loadTransform()) { // load position and rotation from localStorage
-				this.resetTransform(); // or reset and save it if it wasn't in localStorage
-				this.saveTransform();
+			if (!this.loadState()) { // load position and rotation from localStorage
+				this.resetState(); // or reset and save it if it wasn't in localStorage
+				this.saveState();
 			}
 		}
 		
 		// Retrieve and return the last transform saved to localStorage. Not necessarily the current transform.
-		getSavedTransform() {
+		getSavedState() {
 			return JSON.parse(localStorage.getItem(this.name + 'Xform'));
 		}
 		
-		// Retrieve and return the current transform. Not necessarily what is saved in localStorage.
-		getTransform() {
+		// Retrieve and return the current state. Not necessarily what is saved in localStorage.
+		getState() {
 			return {
 				name: this.name, // we can use this to record the whole state
 				left: this.element.style.left,
 				top: this.element.style.top,
-				rotate: this.rotation
+				rotate: this.rotation,
+				onPeg: this.onPeg,
 			};
 		}
 		
 		// Set the current transform, without changing the transform in localStorage.
-		setTransform(xform) {
-		    this.element.style.left = xform.left;
-			this.element.style.top = xform.top;
-			this.rotation = xform.rotate;			
+		setState(state) {
+		    this.element.style.left = state.left;
+			this.element.style.top = state.top;
+			this.rotation = state.rotate;
+			this.onPeg = state.onPeg;			
 		}
 		
-		loadTransform() {
+		loadState() {
 			/* This function loads the position and rotation from localStorage */
-			let xform = this.getSavedTransform();
-			if (xform == null) {
+			let state = this.getSavedState();
+			if (state == null) {
 				return false;
 			}
-		    this.setTransform(xform);
+		    this.setState(state);
 			return true;
 		}
 		
-		saveTransform() {
+		saveState() {
 			/* This stores the place of where the Disc was if the player were to want 
 			to close the window and come back later. */
 			
-			localStorage.setItem(this.name + 'Xform', JSON.stringify(this.getTransform()));
+			localStorage.setItem(this.name + 'Xform', JSON.stringify(this.getState()));
 		}
 		
-		resetTransform() {
+		resetState() {
 			// Reset the transform to the default location and random rotation
 			this.element.style.left = this.defaultX + 'px';
 			this.element.style.top = this.defaultY + 'px';
 			
 			//sets random disk rotation
 			this.rotation = Math.random() * 360;
+			
+			this.onPeg = false;
 
 			// overwrite the previous saved transform
-			this.saveTransform();
+			this.saveState();
 		}
 		
 		getScrolledBounds() {
@@ -202,6 +206,9 @@
 			// Cache the center of this disc;
 			this.center = this.disc.getScrolledCenter();
 
+			// Are we snapped to a peg at the end of the move?
+			this.snapped = this.disc.onPeg;
+			
 			/* To handle dragging, we just keep track of where we started, relative to the
 			   center of the disc. */
 		
@@ -247,8 +254,11 @@
 			document.onmouseup = null;
 		
 			// Push an array containing one entry: the previously saved transform of this disc.
-			undoStack.push([this.disc.getSavedTransform()]);
-			this.disc.saveTransform();
+			undoStack.push([this.disc.getSavedState()]);
+			this.disc.saveState();
+			
+			// Don't set this until the move is completed
+			this.disc.onPeg = this.snapped;
 					
 			/*This function checks if all the Discs are in the correct position to end the game*/
 			gameComplete = 0;
@@ -274,7 +284,7 @@
 			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
 		
 			/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
-			let snapped = false; // keeps track of whether we snapped or not
+			this.snapped = false; // keeps track of whether we snapped or not
 			for (var i = 0; i < 11; i++) {
 				let pegX = pegx[i];
 				let pegY = pegy[i];
@@ -282,12 +292,12 @@
 					/* account for the peg radius */
 					center.x =  pegX + 9;
 					center.y = pegY + 9;
-					snapped = true;
+					this.snapped = true;
 				} 
 				
 			}
 			
-			if (snapped) {
+			if (this.snapped) {
 				soundManager.stop(); // make the plunk sound!
 			} else {
 				soundManager.start(); // keep scraping
@@ -295,7 +305,6 @@
 			
 			/* Finally, set the disc to that location */
 			this.disc.setScrolledCenter(center.x, center.y);
-			
 		}
 	
 		rotate(event) {
@@ -317,9 +326,23 @@
 		}
 	
 		move(event) {
-			if (this.rotateMode) {
+			/* Find the vector from center to current mouse position. */
+			let endVecX = event.pageX - this.center.x;
+			let endVecY = event.pageY - this.center.y;
+			
+			let startLength = Math.sqrt(this.startVecX**2 + this.startVecY**2);
+			let endLength = Math.sqrt(endVecX**2 + endVecY**2);
+			
+			let currentCenter = this.disc.getScrolledCenter();
+			let centersUnchanged = Math.abs(this.center.x - currentCenter.x) < .01 &&
+								   Math.abs(this.center.y - currentCenter.y) < .01;
+			
+			/* Only rotate if the disc is on the same peg it started on, and the radius
+		       of the vector to the center is not stretched more than 50 pixels */
+			if (this.disc.onPeg && centersUnchanged && endLength - startLength < 50) {
 				this.rotate(event);
 			} else {
+				this.disc.onPeg = false;
 				this.translate(event);
 			}
 		}
@@ -400,10 +423,10 @@
 	ResetButton.onmousedown = function() {
 		
 		// Save the previous state of ALL the discs in the undo stack
-		undoStack.push(discs.map(disc => disc.getSavedTransform()));
+		undoStack.push(discs.map(disc => disc.getSavedState()));
 		
 		//Sets all discs to their default positions
-		discs.forEach(disc => disc.resetTransform());
+		discs.forEach(disc => disc.resetState());
 	}
 	
 	//This function undoes the user's previous action
@@ -421,9 +444,9 @@
 			// Get the corresponding disc
 			let disc = Disc.byName.get(state.name);
 			// Update its transform
-			disc.setTransform(state);
+			disc.setState(state);
 			// Ensure that transform is saved in localStorage
-			disc.saveTransform();
+			disc.saveState();
 		}
 	}
 		
