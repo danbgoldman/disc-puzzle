@@ -10,6 +10,7 @@
 <body style="height: 200px">
 
   <p>Drag the Disks to the pegs. Once a disk is on a peg, drag to rotate. Drag away to move pegs again. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
+  <h1 id="solved">SOLVED</h1>
   
   
   <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
@@ -257,16 +258,7 @@
 			// Don't set this until the move is completed
 			this.disc.onPeg = this.snapped;
 					
-			/*This function checks if all the Discs are in the correct position to end the game*/
-			let discsCorrect = discs.map(disc => disc.isCorrect())
-			 						.reduce( (accumulator, currentValue) => accumulator + currentValue, 0);
-			if (discsCorrect === 11) {
-				//If all the discs aren't in the right position nothing happens
-				console.log("win");
-			} else {
-				//However if all the discs are in the right place the completion function runs
-				console.log("lose");
-			};
+			checkCompletion();
 		}
 
 		translate(event) {
@@ -395,6 +387,19 @@
 		}
 	}
 	
+	function checkCompletion() {
+		/*This function checks if all the Discs are in the correct position to end the game*/
+		let discsCorrect = discs.map(disc => disc.isCorrect())
+		 						.reduce( (accumulator, currentValue) => accumulator + currentValue, 0);
+		if (discsCorrect === 11) {
+			//If all the discs are in the right place the completion function runs
+			solved.style.display = "block";
+		} else {
+			//If all the discs aren't in the right position nothing happens
+			solved.style.display = "none";
+		};
+	}
+	
 	var discMover = new DiscMover(); // a singleton
 	var soundManager = new SoundManager();
 	
@@ -414,6 +419,8 @@
 	
 	let ResetButton = document.getElementById("ResetButton");
 	let BackButton = document.getElementById("BackButton");
+	let SolvedSignal = document.getElementById("solved");
+	
 	let undoStack = new PersistentRingBuffer("undo", 20);  // save 20 previous actions
 	
 	/*Simple reset button. Just resets all of the X and Y cordinates for all the Discs. As well as the rotations.*/
@@ -446,6 +453,8 @@
 			disc.saveState();
 		}
 	}
+	
+	checkCompletion();
 		
   </script>
 
