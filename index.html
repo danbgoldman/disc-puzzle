@@ -12,18 +12,6 @@
   <p>Drag the Disks to the pegs. Once a disk is on a peg, drag to rotate. Drag away to move pegs again. <button id="ResetButton">Reset</button> <button id="BackButton">Back</button></p>
   <h1 id="solved">SOLVED</h1>
   
-  
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 556px; top: 211px;" width="20" height="20" id="Peg1">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 779px; top: 196px;" width="20" height="20" id="Peg2">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 904px; top: 254px;" width="20" height="20" id="Peg3">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 212px;" width="20" height="20" id="Peg4">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 768px; top: 320px;" width="20" height="20" id="Peg5">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 990px; top: 341px;" width="20" height="20" id="Peg6">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 696px; top: 400px;" width="20" height="20" id="Peg7">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 889px; top: 453px;" width="20" height="20" id="Peg8">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 553px; top: 555px;" width="20" height="20" id="Peg9">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 794px; top: 619px;" width="20" height="20" id="Peg10">
-  <img src="assets/Peg.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 1155px; top: 554px;" width="20" height="20" id="Peg11">
   <img src="assets/Disc 1.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 45px;" id="Disc1">
   <img src="assets/Disc 4.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 85px;" id="Disc4">
   <img src="assets/Disc 9.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 15px; top: 125px;" id="Disc9">
@@ -37,7 +25,6 @@
   <img src="assets/Disc 6.png" style="cursor: pointer; position: absolute; z-index: 1000; left: 148px; top: 478px;" id="Disc6">
   
   
-  
   <script>
 	"use strict";
 	/* CSS uses degrees, so we'll convert to those units */
@@ -46,7 +33,37 @@
 	// Override the default drag and drop behavior of the browser.
 	let noDragFunc = function() { return false; };
 
-	/*The class Disc and varaible Disc are to assign the specific disc numbers to be used later on
+	/* The class Peg is used to create the HTML element for the peg positions, and snap the discs to
+	   those positions later. */
+	
+	class Peg {
+		constructor(left, top) {
+			this.left = left;
+			this.top = top;
+			
+			let peg = document.createElement("img");
+			peg.src = "assets/Peg.png";
+			peg.style.position = "absolute";
+			peg.style.zIndex = 900;
+			peg.style.left = this.left + "px";
+			peg.style.top = this.top + "px";
+			peg.width = 20;
+			peg.height = 20;
+			
+			document.body.appendChild(peg);
+		}
+		
+		snap(position) {
+			if (Math.abs(position.x - this.left) < 50 && Math.abs(position.y - this.top) < 50) {
+				position.x = this.left + 9;
+				position.y = this.top + 9;
+				position.snapped = true;
+			} 
+			return position;
+		}
+	}
+	
+	/* The class Disc and variable discs are to assign the specific disc numbers to be used later on
 	in the code. name is for the string of the disc, size is for the radius of the disc, defaultX is
 	for the default X position and same for defaultY except for the Y position.*/
 
@@ -266,25 +283,12 @@
 			let center = {
 				x: event.pageX - this.startVecX,
 				y: event.pageY - this.startVecY,
+				snapped: false,
 			}
 			
-			//Array is set up for each peg postition in the X and Y cordinates.
-			var pegx = [556, 779, 904, 1155, 768, 990, 696, 889, 553, 794, 1155];
-			var pegy = [211,196, 254, 212, 320, 341, 400, 453, 555, 619, 554];
-		
-			/* Loop goes through and checks to see if center of disc is within 50 pixles of a peg.*/
-			this.snapped = false; // keeps track of whether we snapped or not
-			for (var i = 0; i < 11; i++) {
-				let pegX = pegx[i];
-				let pegY = pegy[i];
-				if (Math.abs(center.x - pegX) < 50 && Math.abs(center.y - pegY) < 50) {
-					/* account for the peg radius */
-					center.x =  pegX + 9;
-					center.y = pegY + 9;
-					this.snapped = true;
-				} 
-				
-			}
+			center = pegs.reduce((position, peg) => peg.snap(position), center);
+
+			this.snapped = center.snapped;
 			
 			if (this.snapped) {
 				soundManager.stop(); // make the plunk sound!
@@ -402,6 +406,21 @@
 	
 	var discMover = new DiscMover(); // a singleton
 	var soundManager = new SoundManager();
+	
+	//Array is set up for each peg position in the X and Y cordinates.
+	var pegs = [
+		new Peg(556, 211),
+		new Peg(779, 196),
+		new Peg(904, 254),
+		new Peg(1155, 212),
+		new Peg(768, 320),
+		new Peg(990, 341),
+		new Peg(696, 400),
+		new Peg(889, 453),
+		new Peg(553, 555),
+		new Peg(794, 619),
+		new Peg(1155, 554)
+	]
 	
 	var discs = [
 		new Disc("Disc1", 174, 15, 45, 0b110000111, 0b101110), 
